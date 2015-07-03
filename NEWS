@@ -1,0 +1,10 @@
+## GPareto 1.0.1
+
+## change / GPareto 1.0.0
+
+  * update of references
+  * bug corrected in 'plotParetoEmp' to account for the case with a single point
+  * possibility in 'plotParetoEmp' to display a Pareto front with maximization
+  * bug corrected in 'crit_EHI' to count the number of objectives
+  * examples sizes modified due to changes with the \donttest{} section, which is now tested
+  * default packages added in Import section

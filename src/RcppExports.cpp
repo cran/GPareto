@@ -9,52 +9,40 @@ using namespace Rcpp;
 double hvolume2d_Rcpp(NumericMatrix S, double x1, double x2);
 RcppExport SEXP GPareto_hvolume2d_Rcpp(SEXP SSEXP, SEXP x1SEXP, SEXP x2SEXP) {
 BEGIN_RCPP
-    SEXP __sexp_result;
-    {
-        Rcpp::RNGScope __rngScope;
-        Rcpp::traits::input_parameter< NumericMatrix >::type S(SSEXP );
-        Rcpp::traits::input_parameter< double >::type x1(x1SEXP );
-        Rcpp::traits::input_parameter< double >::type x2(x2SEXP );
-        double __result = hvolume2d_Rcpp(S, x1, x2);
-        PROTECT(__sexp_result = Rcpp::wrap(__result));
-    }
-    UNPROTECT(1);
-    return __sexp_result;
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< NumericMatrix >::type S(SSEXP);
+    Rcpp::traits::input_parameter< double >::type x1(x1SEXP);
+    Rcpp::traits::input_parameter< double >::type x2(x2SEXP);
+    __result = Rcpp::wrap(hvolume2d_Rcpp(S, x1, x2));
+    return __result;
 END_RCPP
 }
 // exipsi_Rcpp
 double exipsi_Rcpp(double a, double b, double m, double s);
 RcppExport SEXP GPareto_exipsi_Rcpp(SEXP aSEXP, SEXP bSEXP, SEXP mSEXP, SEXP sSEXP) {
 BEGIN_RCPP
-    SEXP __sexp_result;
-    {
-        Rcpp::RNGScope __rngScope;
-        Rcpp::traits::input_parameter< double >::type a(aSEXP );
-        Rcpp::traits::input_parameter< double >::type b(bSEXP );
-        Rcpp::traits::input_parameter< double >::type m(mSEXP );
-        Rcpp::traits::input_parameter< double >::type s(sSEXP );
-        double __result = exipsi_Rcpp(a, b, m, s);
-        PROTECT(__sexp_result = Rcpp::wrap(__result));
-    }
-    UNPROTECT(1);
-    return __sexp_result;
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< double >::type a(aSEXP);
+    Rcpp::traits::input_parameter< double >::type b(bSEXP);
+    Rcpp::traits::input_parameter< double >::type m(mSEXP);
+    Rcpp::traits::input_parameter< double >::type s(sSEXP);
+    __result = Rcpp::wrap(exipsi_Rcpp(a, b, m, s));
+    return __result;
 END_RCPP
 }
 // EHI_2d_wrap_Rcpp
 double EHI_2d_wrap_Rcpp(NumericMatrix P, NumericVector r, NumericVector mu, NumericVector s);
 RcppExport SEXP GPareto_EHI_2d_wrap_Rcpp(SEXP PSEXP, SEXP rSEXP, SEXP muSEXP, SEXP sSEXP) {
 BEGIN_RCPP
-    SEXP __sexp_result;
-    {
-        Rcpp::RNGScope __rngScope;
-        Rcpp::traits::input_parameter< NumericMatrix >::type P(PSEXP );
-        Rcpp::traits::input_parameter< NumericVector >::type r(rSEXP );
-        Rcpp::traits::input_parameter< NumericVector >::type mu(muSEXP );
-        Rcpp::traits::input_parameter< NumericVector >::type s(sSEXP );
-        double __result = EHI_2d_wrap_Rcpp(P, r, mu, s);
-        PROTECT(__sexp_result = Rcpp::wrap(__result));
-    }
-    UNPROTECT(1);
-    return __sexp_result;
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< NumericMatrix >::type P(PSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type r(rSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type s(sSEXP);
+    __result = Rcpp::wrap(EHI_2d_wrap_Rcpp(P, r, mu, s));
+    return __result;
 END_RCPP
 }

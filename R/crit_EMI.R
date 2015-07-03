@@ -29,13 +29,12 @@
 ##' #---------------------------------------------------------------------------
 ##' # Expected Maximin Improvement surface associated with the "P1" problem at a 15 points design
 ##' #---------------------------------------------------------------------------
-##' \donttest{
 ##' set.seed(25468)
 ##' library(DiceDesign)
 ##' 
 ##' n_var <- 2 
 ##' f_name <- "P1" 
-##' n.grid <- 51
+##' n.grid <- 21
 ##' test.grid <- expand.grid(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid))
 ##' n_appr <- 15 
 ##' design.grid <- round(maximinESE_LHS(lhsDesign(n_appr, n_var, seed = 42)$design)$design, 1)
@@ -54,7 +53,6 @@
 ##'                             points(design.grid[,1], design.grid[,2], pch = 21, bg = "white")
 ##'                             }
 ##'               )
-##' }
 crit_EMI <- function(x, model, paretoFront = NULL, critcontrol = list(nb.samp = 100, seed = 42),
                      type = "UK"){
   if(is.null(critcontrol)){

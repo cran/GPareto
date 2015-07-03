@@ -51,30 +51,26 @@
 ##' @rdname TestFunctions
 ##' @export
 ##' @examples 
-##' \donttest{
 ##' # ----------------------------------
 ##' # 2-objectives test problems
 ##' # ---------------------------------- 
 ##' 
-##' plotParetoGrid("ZDT1")
+##' plotParetoGrid("ZDT1", nPointsGrid = 21)
 ##' 
-##' plotParetoGrid("ZDT2")
+##' plotParetoGrid("ZDT2", nPointsGrid = 21)
 ##' 
-##' plotParetoGrid("ZDT3")
+##' plotParetoGrid("ZDT3", nPointsGrid = 21)
 ##' 
-##' plotParetoGrid("ZDT4")
+##' plotParetoGrid("ZDT4", nPointsGrid = 21)
 ##' 
-##' plotParetoGrid("ZDT6")
+##' plotParetoGrid("ZDT6", nPointsGrid = 21)
 ##' 
-##' plotParetoGrid("P1")
+##' plotParetoGrid("P1", nPointsGrid = 21)
 ##' 
-##' plotParetoGrid("P2")
+##' plotParetoGrid("P2", nPointsGrid = 21)
 ##' 
-##' plotParetoGrid("MOP2")
+##' plotParetoGrid("MOP2", nPointsGrid = 21)
 ##' 
-##' }
-##' 
-
 
 ##' @rdname TestFunctions
 ##' @export

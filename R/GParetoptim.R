@@ -54,8 +54,10 @@
 ##' T. Wagner, M. Emmerich, A. Deutz, W. Ponweiser (2010), On expected-improvement criteria for model-based multi-objective optimization.   
 ##' \emph{Parallel Problem Solving from Nature}, 718-727, Springer, Berlin. \cr \cr
 ##' J. D. Svenson (2011), \emph{Computer Experiments: Multiobjective Optimization and Sensitivity Analysis}, Ohio State university, PhD thesis. 
+##' 
+##' @importFrom stats runif pnorm qnorm
+##' 
 ##' @examples
-##' \donttest{
 ##' set.seed(25468)
 ##' library(DiceDesign)
 ##' 
@@ -73,7 +75,7 @@
 ##' mf2 <- km(~., design = design.grid, response = response.grid[, 2])
 ##' model <- list(mf1, mf2)
 ##' 
-##' nsteps <- 5 
+##' nsteps <- 3
 ##' lower <- rep(0, d)
 ##' upper <- rep(1, d)
 ##' 
@@ -86,6 +88,7 @@
 ##' print(omEGO1$par)
 ##' print(omEGO1$values)
 ##' 
+##' \dontrun{
 ##' # Optimization 2: SMS with discrete search
 ##' optimcontrol <- list(method = "discrete", candidate.points = test.grid)
 ##' critcontrol <- list(refPoint = c(1, 10))
@@ -129,7 +132,6 @@
 ##' legend("topright", c("EHI", "SMS", "SUR", "EMI"), col = c("blue", "green", "red", "orange"),
 ##'  pch = rep(17,4))
 ##' }
-##' 
 GParetoptim <- function (model, fun, cheapfun=NULL, crit="SMS", nsteps, lower, upper, type="UK", cov.reestim=TRUE,
                          critcontrol = NULL,
                          optimcontrol = list(method="genoud", threshold = 1e-5, distance = "euclidean", notrace = FALSE), ...){

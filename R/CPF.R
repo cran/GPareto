@@ -40,18 +40,18 @@
 ##' @importFrom emoa nondominated_points is_dominated dominated_hypervolume
 ##' @import DiceKriging
 ##' @importFrom rgenoud genoud
+##' @importFrom grDevices gray
+##' @importFrom graphics filled.contour axis points contour lines polygon par
 ##' @references
-##' M. Binois, D. Ginsbourger and O. Roustant (+2014), Quantifying Uncertainty on Pareto Fronts with Gaussian process conditional simulations, 
-##' to appear in the European Journal of Operational Research. \cr \cr
+##' M. Binois, D. Ginsbourger and O. Roustant (2015), Quantifying Uncertainty on Pareto Fronts with Gaussian process conditional simulations, 
+##' \emph{European Journal of Operational Research}, 243(2), 386-394. \cr \cr
 ##' C. Chevalier (2013), \emph{Fast uncertainty reduction strategies relying on Gaussian process models}, University of Bern, PhD thesis. \cr \cr
 ##' I. Molchanov (2005), \emph{Theory of random sets}, Springer.
 ##' @examples
-##' \donttest{
 ##' library(DiceDesign)
 ##' set.seed(42)
 ##' 
-##' nvar <- 2
-##' 
+##' nvar <- 2##' 
 ##' fname <- "P1" # Test function
 ##' 
 ##' # Initial design
@@ -64,7 +64,7 @@
 ##' mf2 <- km(~., design = design.grid, response = response.grid[,2])
 ##' 
 ##' # Conditional simulations generation with random sampling points 
-##' nsim <- 100
+##' nsim <- 40
 ##' npointssim <- 200
 ##' Simu_f1 <- matrix(0, nrow = nsim, ncol = npointssim)
 ##' Simu_f2 <- matrix(0, nrow = nsim, ncol = npointssim)
@@ -86,7 +86,6 @@
 ##' 
 ##' # Graphics
 ##' plot(CPF1)
-##' }
 ##' @export
 CPF <-
   function(fun1sims, fun2sims, response, paretoFront = NULL, f1lim = NULL, f2lim = NULL, refPoint = NULL,
@@ -191,11 +190,11 @@ plot.CPF <- function(x, ...){
                    main = "Empirical attainment function",
                    xlab = expression(f[1]), ylab = expression(f[2]),
                    plot.axes = { axis(1); axis(2);
-                                 #points(x$PF[1, ], x$PF[2, ], pch = 17, col = "blue");
-                                 points(x$response[,1], x$responses[,2], pch = 17, col="blue");
-                                 contour(x$x, x$y, x$values, add=T,
-                                         levels = c(0,0.2,0.4,0.6,0.8,1),labcex=1);
-                                 plotParetoEmp(x$PF,col="blue", lwd = 2);
+                     #points(x$PF[1, ], x$PF[2, ], pch = 17, col = "blue");
+                     points(x$response[,1], x$responses[,2], pch = 17, col="blue");
+                     contour(x$x, x$y, x$values, add=T,
+                             levels = c(0,0.2,0.4,0.6,0.8,1),labcex=1);
+                     plotParetoEmp(x$PF,col="blue", lwd = 2);
                    }
     )
   }else{
@@ -205,12 +204,12 @@ plot.CPF <- function(x, ...){
                                      list(a = formatC(x$beta_star, digits = 2))),
                    xlab = expression(f[1]), ylab = expression(f[2]),
                    plot.axes = { axis(1); axis(2);
-                                 #points(x$PF[1, ], x$PF[2, ], pch = 17, col = "blue");
-                                 points(x$response[,1], x$responses[,2], pch = 17, col="blue");
-                                 contour(x$x, x$y, x$values, add=T,
-                                         levels = c(0,0.2,0.4,0.6,0.8,1),labcex=1);
-                                 plotParetoEmp(x$PF,col="blue", lwd = 2);
-                                 plotParetoEmp(x$VE,col="cyan",lwd=2)
+                     #points(x$PF[1, ], x$PF[2, ], pch = 17, col = "blue");
+                     points(x$response[,1], x$responses[,2], pch = 17, col="blue");
+                     contour(x$x, x$y, x$values, add=T,
+                             levels = c(0,0.2,0.4,0.6,0.8,1),labcex=1);
+                     plotParetoEmp(x$PF,col="blue", lwd = 2);
+                     plotParetoEmp(x$VE,col="cyan",lwd=2)
                    }
     )
   }

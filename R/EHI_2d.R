@@ -71,7 +71,7 @@ EHI_2d <- function(x, model, critcontrol=NULL, type = "UK", paretoFront = NULL){
   
   refPoint <- critcontrol$refPoint
   if (is.null(refPoint)){
-    refPoint <- matrix(apply(observations, 2, max) + 1, 1, n.obj) ### + 1 à vérifier !!!
+    refPoint <- matrix(apply(observations, 2, max) + 1, 1, n.obj) ### Should be changed? !!!
     cat("No refPoint provided, ", signif(refPoint, 3), "used \n")
   } 
   

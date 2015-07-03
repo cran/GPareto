@@ -4,11 +4,9 @@
 ##' @param n.grid number of divisions of the grid in each dimension.
 ##' @export
 ##' @references
-##' M. Binois, D. Ginsbourger and O. Roustant (+2014), Quantifying Uncertainty on Pareto Fronts with Gaussian process conditional simulations, 
-##' to appear in the European Journal of Operational Research. \cr \cr
-
+##' M. Binois, D. Ginsbourger and O. Roustant (2015), Quantifying Uncertainty on Pareto Fronts with Gaussian process conditional simulations, 
+##' \emph{European Journal of Operational Research}, 243(2), 386-394. \cr \cr
 ##' @examples
-##' \donttest{
 ##' library(DiceDesign)
 ##' set.seed(42)
 ##' 
@@ -29,8 +27,8 @@
 ##' mf2 <- km(~., design = design.grid, response = response.grid[, 2])
 ##' 
 ##' # Conditional simulations generation with random sampling points 
-##' nsim <- 50
-##' npointssim <- 1000
+##' nsim <- 10 # increase for better results
+##' npointssim <- 80 # increase for better results
 ##' Simu_f1 = matrix(0, nrow = nsim, ncol = npointssim)
 ##' Simu_f2 = matrix(0, nrow = nsim, ncol = npointssim)
 ##' design.sim = array(0,dim = c(npointssim, nvar, nsim))
@@ -48,7 +46,6 @@
 ##'
 ##' # Symmetric deviation function
 ##' plotSymDevFun(CPF1)
-##' }
 ##' 
 plotSymDevFun <- function(CPF, n.grid = 100){
   

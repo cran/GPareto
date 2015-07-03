@@ -1,12 +1,11 @@
 ##' Multi-objective optimization and quantification of uncertainty on Pareto fronts, using Gaussian process models.
 ##' @title Package GPareto
-##' @aliases GPareto
 ##' @author Mickael Binois, Victor Picheny
 ##' @docType package
-##' @name GPareto-package
+##' @name GPareto
 ##' @references
-##' M. Binois, D. Ginsbourger and O. Roustant (+2014), Quantifying Uncertainty on Pareto Fronts with Gaussian process conditional simulations, 
-##' to appear in the European Journal of Operational Research. \cr \cr
+##' M. Binois, D. Ginsbourger and O. Roustant (2015), Quantifying Uncertainty on Pareto Fronts with Gaussian process conditional simulations, 
+##' \emph{European Journal of Operational Research}, 243(2), 386-394. \cr \cr
 ##' O. Roustant, D. Ginsbourger and Yves Deville (2012), DiceKriging, DiceOptim:
 ##'  Two R Packages for the Analysis of Computer Experiments by Kriging-Based Metamodeling and Optimization,
 ##'   \emph{Journal of Statistical Software}, 51(1), 1-55, \url{http://www.jstatsoft.org/v51/i01/}. \cr \cr
@@ -14,8 +13,8 @@
 ##' \emph{Evolutionary Computation (CEC)}, 2147-2154. \cr \cr
 ##' V. Picheny (2014), Multiobjective optimization using Gaussian process emulators via stepwise uncertainty reduction, 
 ##' \emph{Statistics and Computing}. \cr \cr
-##' T. Wagner, M. Emmerich, A. Deutz, W. Ponweiser (2010), On expected-improvement criteria for model-based multi-objective optimization.   
-##' \emph{Parallel Problem Solving from Nature}, pp. 718-727, Springer, Berlin. \cr \cr
+##' T. Wagner, M. Emmerich, A. Deutz, W. Ponweiser (2010), On expected-improvement criteria for model-based multi-objective optimization,   
+##' \emph{Parallel Problem Solving from Nature}, 718-727, Springer, Berlin. \cr \cr
 ##' J. D. Svenson (2011), \emph{Computer Experiments: Multiobjective Optimization and Sensitivity Analysis}, Ohio State University, PhD thesis. \cr \cr
 ##' C. Chevalier (2013), \emph{Fast uncertainty reduction strategies relying on Gaussian process models}, University of Bern, PhD thesis.  
 ##' @details 
@@ -35,7 +34,7 @@
 ##' 
 ##' @seealso \code{\link[DiceKriging]{DiceKriging}}, \code{\link[DiceOptim]{DiceOptim}}
 ##' @examples
-##' \donttest{
+##' \dontrun{
 ##' #------------------------------------------------------------
 ##' # Example 1 : quantification of uncertainty on Pareto front
 ##' #------------------------------------------------------------
@@ -59,8 +58,8 @@
 ##' mf2 <- km(~., design = design.grid, response = response.grid[,2])
 ##' 
 ##' # Conditional simulations generation with random sampling points 
-##' nsim <- 50 # increase for better results
-##' npointssim <- 500 # increase for better results
+##' nsim <- 100 # increase for better results
+##' npointssim <- 1000 # increase for better results
 ##' Simu_f1 <- matrix(0, nrow = nsim, ncol = npointssim)
 ##' Simu_f2 <- matrix(0, nrow = nsim, ncol = npointssim)
 ##' design.sim <- array(0, dim = c(npointssim, nvar, nsim))
@@ -82,6 +81,7 @@
 ##' 
 ##' # Display of the symmetric deviation function
 ##' plotSymDevFun(CPF1)
+##' }
 ##' #------------------------------------------------------------
 ##' # Example 2 : Surrogate-based multi-objective Optimization
 ##' #------------------------------------------------------------
@@ -91,7 +91,7 @@
 ##' d <- 2 
 ##' 
 ##' fname <- ZDT3
-##' n.grid <- 101
+##' n.grid <- 26
 ##' test.grid <- expand.grid(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid))
 ##' nappr <- 25 
 ##' design.grid <- maximinESE_LHS(lhsDesign(nappr, d, seed = 42)$design)$design
@@ -100,7 +100,7 @@
 ##' mf2 <- km(~., design = design.grid, response = response.grid[,2])
 ##' 
 ##' # Optimization
-##' nsteps <- 5 
+##' nsteps <- 3 
 ##' lower <- rep(0, d) 
 ##' upper <- rep(1, d)     
 ##' omEGO <- GParetoptim(model = list(mf1, mf2), fun = fname, crit = "EHI", nsteps = nsteps,
@@ -117,6 +117,7 @@
 ##' points(response.grid[,1], response.grid[,2], col = "red", pch = 20)
 ##' text(omEGO$values[,1], omEGO$values[,2], labels = 1:nsteps, pos = 3, col = "blue")
 ##' 
+##' \dontrun{
 ##' #------------------------------------------------------------
 ##' # Example 3 : Surrogate-based multi-objective Optimization including a cheap function
 ##' #------------------------------------------------------------
@@ -174,6 +175,5 @@
 ##'                       nsteps = nsteps, lower = lower, upper = upper, nobj = 4)
 ##' print(omEGO4$par)
 ##' print(omEGO4$values)
-##' 
 ##' }
 NULL 

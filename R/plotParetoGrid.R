@@ -11,14 +11,13 @@
 #' #------------------------------------------------------------
 #' # Examples with test functions
 #' #------------------------------------------------------------
-#' \donttest{
 #' 
 #' plotParetoGrid("ZDT3", nPointsGrid = 21)
 #' 
-#' plotParetoGrid("P1")
+#' plotParetoGrid("P1", nPointsGrid = 21)
 #' 
-#' plotParetoGrid("MOP2", xlim = c(0, 1), ylim = c(0, 1)) 
-#' }
+#' plotParetoGrid("MOP2", xlim = c(0, 1), ylim = c(0, 1), nPointsGrid = 21) 
+
 
 
 plotParetoGrid <- function(fname = "ZDT1", xlim = c(0,1), ylim = c(0,1), nPointsGrid = 100){

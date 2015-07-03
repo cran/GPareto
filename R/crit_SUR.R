@@ -25,8 +25,6 @@
 ##' V. Picheny (2014), Multiobjective optimization using Gaussian process emulators via stepwise uncertainty reduction, 
 ##' \emph{Statistics and Computing}.
 ##' @examples
-##' \dontrun{
-##' 
 ##' #---------------------------------------------------------------------------
 ##' # crit_SUR surface associated with the "P1" problem at a 15 points design
 ##' #---------------------------------------------------------------------------
@@ -37,7 +35,7 @@
 ##' n_var <- 2 
 ##' n.obj <- 2 
 ##' f_name <- "P1" 
-##' n.grid <- 51
+##' n.grid <- 14
 ##' test.grid <- expand.grid(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid))
 ##' n_appr <- 12 
 ##' design.grid <- round(maximinESE_LHS(lhsDesign(n_appr, n_var, seed = 42)$design)$design, 1)
@@ -78,8 +76,7 @@
 ##'                plot.axes = {axis(1); axis(2);
 ##'                             points(design.grid[,1], design.grid[,2], pch = 21, bg = "white")
 ##'                             }
-##'               )
-##' }              
+##'               )         
 ##' @export
 
 crit_SUR <- function(x, model, paretoFront = NULL,

@@ -83,7 +83,7 @@ SAA_mEI <- function(x, model,
   if(critcontrol$type == "hypervolume"){
     Improvement <- Hypervolume_improvement
     if (is.null(refPoint)){
-      refPoint <- matrix(apply(observations, 2, max) + 1, 1, n.obj) ### + 1 à vérifier !!!
+      refPoint <- matrix(apply(observations, 2, max) + 1, 1, n.obj) ### Should be changed? !!!
       cat("No refPoint provided, ", signif(refPoint, 3), "used \n")
     } 
   }

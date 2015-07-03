@@ -2,7 +2,8 @@
 ##' 
 ##' @title Pareto Front visualization
 ##' @param nondominatedPoints points considered to plot the Pareto Front with segments, matrix with one point per column,
-##' @param add boolean indicating whether a new graphic should be drawn.
+##' @param add optional boolean indicating whether a new graphic should be drawn,
+##' @param max optional boolean indicating whether to display a Pareto front in a maximization context,
 ##' @param ... additional values to be passed to the \code{\link[graphics]{lines}} function.
 ##' @export
 ##' @examples
@@ -18,34 +19,65 @@
 ##' plotParetoEmp(cbind(x, y), col = "green")
 ##' ## Alternative
 ##' plotParetoEmp(cbind(x, y), col = "red", add = FALSE)
+##' 
+##' ## With maximization
+##' 
+##' plotParetoEmp(cbind(x, y), col = "blue", max = TRUE)
 
-plotParetoEmp <- function(nondominatedPoints, add = TRUE, ...){
-  #     temp <- cbind(nondominatedPoints,c(min(nondominatedPoints[1,])-0.0001,10000))
-  #    
-  #     # Construction des step functions
-  #     f1_pareto <- sort(temp[1,],index.return=TRUE)
-  #     f2_pareto <- temp[2,f1_pareto$ix]
-  #     f1_pareto <- f1_pareto$x
-  #     
-  #     steptest <- stepfun(f1_pareto,c(f2_pareto,f2_pareto[length(f2_pareto)]),right=TRUE)
-  #     
-  #     plot.stepfun(steptest,...)
-  
-  if(add == FALSE){
-    plot(nondominatedPoints, pch = ".",...)
+plotParetoEmp <- function(nondominatedPoints, add = TRUE, max = FALSE,...){
+  if(class(nondominatedPoints) != "matrix"){
+    cat("The nondominatedPoints argument should be a matrix \n")
+  }else{
+    if(add == FALSE){
+      plot(nondominatedPoints, ...)
+    }
+    
+    temp <- nondominatedPoints[order(nondominatedPoints[,1]), , drop = FALSE]
+    
+    if(max){
+      # Limiting points
+      if(add){
+        lim_left <- par('usr')[1]
+        lim_bottom <- par('usr')[3]
+      }else{
+        lim_left <- -abs(20*temp[nrow(temp),1])
+        lim_bottom <- -abs(20*temp[1,2])
+      }
+      
+      lines(c(lim_left, temp[1, 1]), c(temp[1, 2], temp[1, 2]), ...)
+      
+      lines(c(temp[dim(temp)[1], 1], temp[dim(temp)[1], 1]), c(temp[dim(temp)[1], 2], lim_bottom), ...)
+      
+      # Segments in between
+      if(nrow(temp) > 1){
+        for (i in 1:(nrow(temp) - 1)) {
+          lines(c(temp[i, 1], temp[i , 1]), c(temp[i, 2], temp[i+ 1, 2]), ...)
+          lines(c(temp[i, 1], temp[i + 1, 1]), c(temp[i+1, 2],  temp[i + 1, 2]), ...)
+        }
+      }
+      
+    }else{
+      # Limiting points
+      if(add){
+        lim_right <- par('usr')[2]
+        lim_up <- par('usr')[4]
+      }else{
+        lim_right <- abs(20*temp[nrow(temp),1])
+        lim_up <- abs(20*temp[1,2])
+      }
+      
+      lines(c(temp[1,1], temp[1,1]),c(lim_up, temp[1,2]),...) #first segment
+      
+      lines(c(temp[dim(temp)[1], 1], lim_right),
+            c(temp[dim(temp)[1], 2], temp[dim(temp)[1], 2]),...) #last segment
+      
+      # Segments in between
+      if(nrow(temp) > 1){
+        for(i in 1:(nrow(temp)-1)){
+          lines(c(temp[i,1], temp[i+1,1]),c(temp[i,2], temp[i,2]),...) #horizontal part
+          lines(c(temp[i+1,1], temp[i+1,1]),c(temp[i,2], temp[i+1,2]),...) #vertical part
+        }
+      }
+    }
   }
-  
-
-  temp <- nondominatedPoints[order(nondominatedPoints[,1]),]
-  lines(c(temp[1,1],temp[1,1]),c(abs(20*temp[1,2]),temp[1,2]),...) #first segment
-  
-  lines(c(temp[dim(temp)[1], 1], abs(20*temp[dim(temp)[1],1])),
-        c(temp[dim(temp)[1], 2], temp[dim(temp)[1], 2]),...) #last segment
-  
-  # Segment in between
-  for (i in 1:(dim(temp)[1]-1)){
-    lines(c(temp[i,1], temp[i+1,1]),c(temp[i,2],temp[i,2]),...) #horizontal part
-    lines(c(temp[i+1,1],temp[i+1,1]),c(temp[i,2],temp[i+1,2]),...) #vertical part
-  }
-  
 }

@@ -1,8 +1,7 @@
 Package: GPareto
-Type: Package
 Title: Gaussian Processes for Pareto Front Estimation and Optimization
-Version: 1.0.0
-Date: 2014-12-17
+Version: 1.0.1
+Date: 2015-06-22
 Author: Mickael Binois, Victor Picheny
 Maintainer: Mickael Binois <mickael.binois@mines-stetienne.fr>
 Description: Gaussian process regression models, a.k.a. kriging models, are
@@ -12,11 +11,11 @@ Description: Gaussian process regression models, a.k.a. kriging models, are
     on Pareto fronts is provided using conditional simulations.
 License: GPL-3
 Depends: DiceKriging (>= 1.5.3), emoa, methods
-Imports: Rcpp (>= 0.11.1), rgenoud, pbivnorm, pso, randtoolbox,
-        KrigInv, MASS
+Imports: stats, grDevices, graphics, Rcpp (>= 0.11.1), rgenoud,
+        pbivnorm, pso, randtoolbox, KrigInv, MASS
 Suggests: DiceDesign (>= 1.4)
 LinkingTo: Rcpp
-Packaged: 2014-12-17 09:42:42 UTC; a073501
-NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2014-12-17 13:08:28
+NeedsCompilation: yes
+Packaged: 2015-07-03 09:07:26 UTC; binois
+Date/Publication: 2015-07-03 12:50:54

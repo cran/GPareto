@@ -252,7 +252,7 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfun = NULL, t
   
   
   if (is.null(critcontrol$refPoint)){    
-    critcontrol$refPoint <- matrix(apply(observations, 2, max) + 1, 1, n.obj) ### + 1 à vérifier !!!
+    critcontrol$refPoint <- matrix(apply(observations, 2, max) + 1, 1, n.obj) ### Should be changed? !!!
     if(crit == "SMS" | crit =="EHI")
       cat("No refPoint provided, ", signif(critcontrol$refPoint, 3), "used \n")
   } 
