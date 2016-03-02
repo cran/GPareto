@@ -9,7 +9,7 @@
 ##' @import methods 
 ##' @export
 ##' @examples
-##' ##' ########################################################
+##' ########################################################
 ##' ## Example with a fast to evaluate objective
 ##' ########################################################
 ##' \dontrun{
@@ -35,7 +35,7 @@
 ##' 
 ##' # Optimization reference: SMS with discrete search
 ##' optimcontrol <- list(method = "pso")
-##' omEGO1 <- GParetoptim(model = model, fun = fname, crit = "SMS", nsteps = nsteps,
+##' omEGO1 <- GParetoptim(model = model, fn = fname, crit = "SMS", nsteps = nsteps,
 ##'                      lower = lower, upper = upper, optimcontrol = optimcontrol)
 ##' print(omEGO1$par)
 ##' print(omEGO1$values)
@@ -63,7 +63,7 @@
 ##' 
 ##' optimcontrol <- list(method = "pso")
 ##' model2 <- list(mf1)
-##' omEGO2 <- GParetoptim(model = model2, fun = f1, cheapfun = f2, crit = "SMS", nsteps = nsteps,
+##' omEGO2 <- GParetoptim(model = model2, fn = f1, cheapfn = f2, crit = "SMS", nsteps = nsteps,
 ##'                      lower = lower, upper = upper, optimcontrol = optimcontrol)
 ##' print(omEGO2$par)
 ##' print(omEGO2$values)
@@ -106,7 +106,7 @@
 ##' @slot X the design of experiments, size \code{n x d},
 ##' @slot y  the observations, size \code{n x 1},
 ##' @slot fun the evaluator function.
-##' @section Objects from the Class : To create a \code{fastfun} object, use \code{\link[GPareto]{fastfun}}. See also this function for more details.
+##' @section Objects from the Class : To create a \code{fastfun} object, use \code{\link[GPareto]{fastfun}}. See also this function for more details and examples.
 ##' @export
 setClass("fastfun", 		
          representation( 
@@ -138,11 +138,14 @@ setClass("fastfun",
 ##*****************************************************************************
 
 
-predict.fastfun <- function(object, newdata, cov.compute = TRUE, ...) {
-  res <- list(mean = apply(newdata, 1, object@fun), sd = rep(0, nrow(newdata)))
-  if(cov.compute){
+predict.fastfun <- function(object, newdata, cov.compute = TRUE, light.return = FALSE, ...) {
+  res <- list(trend = NULL, mean = apply(newdata, 1, object@fun), sd = rep(0, nrow(newdata)))
+  if(!light.return & cov.compute){
     res$cov <- matrix(0, nrow(newdata), nrow(newdata))
-  } 
+  }
+  res$trend <- res$mean
+  res$lower95 <- res$mean
+  res$upper95 <- res$mean
   
   return(res)
   
@@ -197,3 +200,40 @@ setMethod("update", "fastfun",
 )
 
 
+##****************************************************************************
+##			     simulate  METHOD
+##****************************************************************************
+
+simulate.fastfun <- function(object, nsim=1, seed=NULL, newdata=NULL, 
+                             cond=FALSE, nugget.sim=0, checkNames=TRUE, ...){
+  if(is.null(newdata)){
+    simulation <- as.vector(object@y)
+  }else{
+    simulation <- as.vector(apply(newdata, 1, object@fun))
+  }
+  return(matrix(simulation, nrow = nsim, ncol = length(simulation), byrow = T))
+}
+
+if(!isGeneric("simulate")) {
+  setGeneric(name = "simulate",
+             def = function(object, ...) standardGeneric("simulate")
+  )
+}
+
+##' @param object \code{\link[GPareto]{fastfun}} object
+##' @param nsim an optional number specifying the number of response vectors to simulate. Default is 1.
+##' @param seed usual seed argument of method simulate. Not used.
+##' @param newdata an optional vector, matrix or data frame containing the points where to perform predictions.
+##'  Default is \code{NULL}: simulation is performed at design points specified in \code{object}.
+##' @param cond an optional boolean indicating the type of simulations. Not used.
+##' @param nugget.sim	an optional number corresponding to a numerical nugget effect. Not used.
+##' @param checkNames an optional boolean. Not used.
+##' @param ... further arguments (not used)
+##' @describeIn fastfun Simulate responses values (for compatibility with methods using \code{\link[DiceKriging]{simulate}})
+##' @keywords internal
+setMethod("simulate", "fastfun", 
+          function(object, nsim, seed, newdata, cond, nugget.sim, checkNames, ...) {
+            simulate.fastfun(object = object, nsim = nsim, seed = seed, newdata = newdata, 
+                             cond = cond, nugget.sim = nugget.sim, checkNames = checkNames, ...) 
+          }
+)

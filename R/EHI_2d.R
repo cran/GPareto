@@ -59,10 +59,11 @@ EHI_2d <- function(x, model, critcontrol=NULL, type = "UK", paretoFront = NULL){
   d <- model[[1]]@d
   x.new <- matrix(x, 1, d)
   
-  if(is.null(paretoFront)){
+  if(is.null(paretoFront) || is.null(critcontrol$refPoint)){
     observations <- matrix(0, model[[1]]@n, n.obj)
     for (i in 1:n.obj) observations[,i] <- model[[i]]@y
-    paretoFront <- t(nondominated_points(t(observations)))
+    if(is.null(paretoFront))
+      paretoFront <- t(nondominated_points(t(observations)))
   }
   
   if (is.unsorted(paretoFront[,1])){
@@ -71,7 +72,7 @@ EHI_2d <- function(x, model, critcontrol=NULL, type = "UK", paretoFront = NULL){
   
   refPoint <- critcontrol$refPoint
   if (is.null(refPoint)){
-    refPoint <- matrix(apply(observations, 2, max) + 1, 1, n.obj) ### Should be changed? !!!
+    refPoint <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj) ### May be changed? 
     cat("No refPoint provided, ", signif(refPoint, 3), "used \n")
   } 
   
@@ -91,10 +92,9 @@ EHI_2d <- function(x, model, critcontrol=NULL, type = "UK", paretoFront = NULL){
     ## A new x too close to the known observations could result in numerical problems
   
     if(checkPredict(x, model, type = type, distance = critcontrol$distance, threshold = critcontrol$threshold)){
-      return(0)
+      return(-1)
     }else{
-      return(EHI_2d_wrap_Rcpp(paretoFront,refPoint,mu,sigma))
+      return(EHI_2d_wrap_Rcpp(paretoFront, refPoint, mu, sigma))
     }
   }
 }
-

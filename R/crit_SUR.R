@@ -1,4 +1,5 @@
 ##' Computes the SUR criterion (Expected Excursion Volume Reduction) at point \code{x} for 2 or 3 objectives.
+##' To avoid numerical instabilities, the new point is penalized if it is too close to an existing observation.
 ##' @title Analytical expression of the SUR criterion for two or three objectives.
 ##' @param x a vector representing the input for which one wishes to calculate the criterion,
 ##' @param model a list of objects of class \code{\link[DiceKriging]{km}} (one for each objective),
@@ -37,7 +38,7 @@
 ##' f_name <- "P1" 
 ##' n.grid <- 14
 ##' test.grid <- expand.grid(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid))
-##' n_appr <- 12 
+##' n_appr <- 15 
 ##' design.grid <- round(maximinESE_LHS(lhsDesign(n_appr, n_var, seed = 42)$design)$design, 1)
 ##' response.grid <- t(apply(design.grid, 1, f_name))
 ##' paretoFront <- t(nondominated_points(t(response.grid)))
@@ -96,15 +97,16 @@ crit_SUR <- function(x, model, paretoFront = NULL,
       integration.param   <- integration_design_optim(critcontrol$SURcontrol, d,
                                                       critcontrol$lower, critcontrol$upper, model = model)
       integration.points  <- as.matrix(integration.param$integration.points)
+      integration.weights <- integration.param$integration.weights
       
       precalc.data <- vector("list", n.obj)
-      intpoints.oldmean <- intpoints.oldsd <- matrix(0, n.obj, nrow(integration.points))
+      mn.X <- sn.X <- matrix(0, n.obj, nrow(integration.points))
       
       for (i in 1:n.obj){
         p.tst <- predict(model[[i]], newdata=integration.points, type=type, checkNames=FALSE)
-        intpoints.oldmean[i,] <- p.tst$mean
-        intpoints.oldsd[i,]   <- p.tst$sd
-        if (max(intpoints.oldsd[i,]) != 0) precalc.data[[i]] <- precomputeUpdateData(model[[i]], integration.points)
+        mn.X[i,] <- p.tst$mean
+        sn.X[i,]   <- p.tst$sd
+        if (max(sn.X[i,]) != 0) precalc.data[[i]] <- precomputeUpdateData(model[[i]], integration.points)
       }
       
     }else{

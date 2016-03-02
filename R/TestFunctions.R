@@ -12,6 +12,7 @@
 ##' @aliases DTLZ3
 ##' @aliases DTLZ7
 ##' 
+##' @description Multi-objective test functions.
 ##' @title Test functions of x
 ##'
 ##' @param x matrix specifying the location where the function is to be evaluated, one point per row,
@@ -20,8 +21,8 @@
 ## ' @note \code{funs} is a generic name for the functions documented.
 ##' 
 ##' @details These functions are coming from different benchmarks:
-##' the \code{ZDT} test problems from an article of E. Zitzler, \code{P1} from the thesis of J. Parr and \code{P2}
-##' from an article of Poloni et al. . \code{MOP2} and \code{MOP3} are from Van Veldhuizen. \cr \cr
+##' the \code{ZDT} test problems from an article of E. Zitzler et al., \code{P1} from the thesis of J. Parr and \code{P2}
+##' from an article of Poloni et al. . \code{MOP2} and \code{MOP3} are from Van Veldhuizen and \code{DTLZ} functions are from Deb et al. . \cr \cr
 ##' 
 ##' Domains (sometimes rescaled to \code{[0,1]}):
 ##' \itemize{
@@ -44,7 +45,10 @@
 ##' E. Zitzler, K. Deb, and L. Thiele (2000), Comparison of multiobjective evolutionary
 ##' algorithms: Empirical results, \emph{Evol. Comput.}, 8(2), 173-195.
 ##' 
-##' D. A. Van Veldhuizen, G. B. Lamont (1999), Multiobjective evolutionary algorithm test suites. \emph{In Proceedings of the 1999 ACM symposium on Applied computing}, 351-357.
+##' K. Deb, L. Thiele, M. Laumanns and E. Zitzler (2002), Scalable Test Problems for Evolutionary Multiobjective Optimization, 
+##' \emph{IEEE Transactions on Evolutionary Computation}, 6(2), 182-197.
+##' 
+##' D. A. Van Veldhuizen, G. B. Lamont (1999), Multiobjective evolutionary algorithm test suites, \emph{In Proceedings of the 1999 ACM symposium on Applied computing}, 351-357.
 ##' 
 ##' 
 ##' 
@@ -55,32 +59,31 @@
 ##' # 2-objectives test problems
 ##' # ---------------------------------- 
 ##' 
-##' plotParetoGrid("ZDT1", nPointsGrid = 21)
+##' plotParetoGrid("ZDT1", n.grid = 21)
 ##' 
-##' plotParetoGrid("ZDT2", nPointsGrid = 21)
+##' plotParetoGrid("ZDT2", n.grid = 21)
 ##' 
-##' plotParetoGrid("ZDT3", nPointsGrid = 21)
+##' plotParetoGrid("ZDT3", n.grid = 21)
 ##' 
-##' plotParetoGrid("ZDT4", nPointsGrid = 21)
+##' plotParetoGrid("ZDT4", n.grid = 21)
 ##' 
-##' plotParetoGrid("ZDT6", nPointsGrid = 21)
+##' plotParetoGrid("ZDT6", n.grid = 21)
 ##' 
-##' plotParetoGrid("P1", nPointsGrid = 21)
+##' plotParetoGrid("P1", n.grid = 21)
 ##' 
-##' plotParetoGrid("P2", nPointsGrid = 21)
+##' plotParetoGrid("P2", n.grid = 21)
 ##' 
-##' plotParetoGrid("MOP2", nPointsGrid = 21)
+##' plotParetoGrid("MOP2", n.grid = 21)
 ##' 
-
 ##' @rdname TestFunctions
 ##' @export
 ZDT1 <-
   function(x){
     if(is.null(dim(x))){
-      x <- matrix(x, 1) 
+      x <- matrix(x, nrow = 1) 
     }
     n <- ncol(x)
-    g <- 1+rowSums(as.matrix(x[,2:n]))*9/(n-1)
+    g <- 1+rowSums(x[,2:n, drop = FALSE])*9/(n-1)
     return(cbind(x[,1],g*(1-sqrt(x[,1]/g))))
   }
 
@@ -89,10 +92,10 @@ ZDT1 <-
 ZDT2 <- 
   function(x){
     if(is.null(dim(x))){
-      x <- matrix(x, 1) 
+      x <- matrix(x, nrow = 1) 
     }
     n <- ncol(x)
-    g <- 1+rowSums(as.matrix(x[,2:n]))*9/(n-1)
+    g <- 1+rowSums(x[,2:n, drop = FALSE])*9/(n-1)
     return(cbind(x[,1],g*(1-(x[,1]/g)^2)))
   }
 
@@ -101,12 +104,12 @@ ZDT2 <-
 ZDT3 <-
   function(x){
     if(is.null(dim(x))){
-      x <- matrix(x, 1) 
+      x <- matrix(x, nrow = 1) 
     }
     n <- ncol(x)
-    g <- 1+rowSums(as.matrix(x[,2:n]))*9/(n-1)
-    f2<-g*(1 - sqrt(x[,1]/g) - x[,1]/g*sin(10*pi*x[,1]))
-    return(cbind(x[,1],f2))
+    g <- 1+rowSums(x[,2:n, drop = FALSE])*9/(n-1)
+ 
+    return(cbind(x[,1], g*(1 - sqrt(x[,1]/g) - x[,1]/g*sin(10*pi*x[,1]))))
   }
 
 ##' @rdname TestFunctions
@@ -114,13 +117,12 @@ ZDT3 <-
 ZDT4 <-
   function(x){
     if(is.null(dim(x))){
-      x <- matrix(x, 1) 
+      x <- matrix(x, nrow = 1) 
     }
     n <- ncol(x)
     
-    g <- 1+10*(n-1) + rowSums((as.matrix(x[,2:n])*10-5)^2-10*cos(4*pi*(x[,2:n]*10-5)))
-    f2 <- g*(1 - sqrt(x[,1]/g))
-    return(cbind(x[,1],f2))
+    g <- 1+10*(n-1) + rowSums((x[,2:n, drop = FALSE]*10-5)^2-10*cos(4*pi*(x[,2:n, drop = FALSE]*10-5)))
+    return(cbind(x[,1], g*(1 - sqrt(x[,1]/g))))
   }
 
 ##' @rdname TestFunctions
@@ -128,11 +130,11 @@ ZDT4 <-
 ZDT6 <-
   function(x){
     if(is.null(dim(x))){
-      x <- matrix(x, 1) 
+      x <- matrix(x, nrow = 1) 
     }
     n <- ncol(x)
     f1 <- 1-exp(-4*x[,1])*(sin(6*pi*x[,1]))^6
-    g <- 1+9*(1/(n-1)*rowSums(as.matrix(x[,2:n])))^(0.25)
+    g <- 1+9*(1/(n-1)*rowSums(x[,2:n, drop = FALSE]))^(0.25)
     return(cbind(f1,g*(1-(f1/g)^2)))
   }
 
@@ -141,13 +143,13 @@ ZDT6 <-
 P1 <-
   function(x){
     if(is.null(dim(x))){
-      x <- matrix(x, 1) 
+      x <- matrix(x, nrow = 1) 
     }
     b1<-15*x[,1]-5
     b2<-15*x[,2]
-    return( cbind( (b2-5.1*(b1/(2*pi))^2+5/pi*b1-6)^2 +10*((1-1/(8*pi))*cos(b1)+1),
-               -sqrt((10.5-b1)*(b1+5.5)*(b2+0.5)) - 1/30*(b2 -5.1*(b1/(2*pi))^2-6)^2 - 1/3*((1-1/(8*pi))*cos(b1)+1)
-    ) 
+    return(cbind((b2-5.1*(b1/(2*pi))^2+5/pi*b1-6)^2 +10*((1-1/(8*pi))*cos(b1)+1),
+                 -sqrt((10.5-b1)*(b1+5.5)*(b2+0.5)) - 1/30*(b2 -5.1*(b1/(2*pi))^2-6)^2 - 1/3*((1-1/(8*pi))*cos(b1)+1)
+                 ) 
     )
   }
 
@@ -200,13 +202,15 @@ MOP2 <- function(x)
   xmod <- x*4 - 2
   if (is.null(nrow(x)))
   { 
-    y1 <- 1 - exp(-sum((xmod - 1/sqrt(2))^2) )
-    y2 <- 1 - exp(-sum((xmod + 1/sqrt(2))^2) )
+    n <- length(xmod)
+    y1 <- 1 - exp(-sum((xmod - 1/sqrt(n))^2) )
+    y2 <- 1 - exp(-sum((xmod + 1/sqrt(n))^2) )
     Y <- matrix(c(y1,y2),2,1)
   } else
   {
-    y1 <- 1 - exp(-rowSums((xmod - 1/sqrt(2))^2) )
-    y2 <- 1 - exp(-rowSums((xmod + 1/sqrt(2))^2) )
+    n <- ncol(xmod)
+    y1 <- 1 - exp(-rowSums((xmod - 1/sqrt(n))^2) )
+    y2 <- 1 - exp(-rowSums((xmod + 1/sqrt(n))^2) )
     Y <- cbind(y1,y2)
   }
   

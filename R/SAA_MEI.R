@@ -59,7 +59,7 @@ SAA_mEI <- function(x, model,
   n.obj <- length(model)
   d <- model[[1]]@d
   x.new <- matrix(x, 1, d)
-  
+
   if(is.null(paretoFront)){
     observations <- matrix(0, model[[1]]@n, n.obj)
     for (i in 1:n.obj) observations[,i] <- model[[i]]@y
@@ -70,7 +70,7 @@ SAA_mEI <- function(x, model,
   
   nb.samp <- critcontrol$nb.samp
   if(is.null(nb.samp)){
-    nb.samp <- 100
+    nb.samp <- 50
   }
   
   seed <- critcontrol$seed
@@ -83,7 +83,7 @@ SAA_mEI <- function(x, model,
   if(critcontrol$type == "hypervolume"){
     Improvement <- Hypervolume_improvement
     if (is.null(refPoint)){
-      refPoint <- matrix(apply(observations, 2, max) + 1, 1, n.obj) ### Should be changed? !!!
+      refPoint <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj) ### May be changed? 
       cat("No refPoint provided, ", signif(refPoint, 3), "used \n")
     } 
   }
@@ -98,21 +98,24 @@ SAA_mEI <- function(x, model,
   
   ## A new x too close to the known observations could result in numerical problems
   if(checkPredict(x, model, type = type, distance = critcontrol$distance, threshold = critcontrol$threshold)){
-    return(0)
+    return(-1)
   }else{
     # Set seed to have a deterministic function to optimize
-    if(!exists(".Random.seed")){
-      runif(1)
-    }
-    
-    ## Set the random seed back to its initial value (to avoid selecting always the same
-    ## random points in other functions)
-    old <- .Random.seed
-    on.exit( { set.seed(old) } )
+    # see http://www.cookbook-r.com/Numbers/Saving_the_state_of_the_random_number_generator/
+    if (exists(".Random.seed", .GlobalEnv))
+      oldseed <- .GlobalEnv$.Random.seed
+    else
+      oldseed <- NULL
     
     set.seed(seed)
     
     Samples <- mvrnorm(n = nb.samp, mu, diag(sigma))
+    
+    if (!is.null(oldseed)) 
+      .GlobalEnv$.Random.seed <- oldseed
+    else
+      rm(".Random.seed", envir = .GlobalEnv)
+    
     
     Res <- apply(Samples, 1, Improvement, front = paretoFront, refPoint = refPoint)
     

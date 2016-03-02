@@ -1,5 +1,5 @@
 ##' Expected Maximin Improvement with respect to the current Pareto front with Sample Average Approximation.
-##' To avoid numerical instabilities, the new point is evaluated only if it is not too close to an existing observation.
+##' To avoid numerical instabilities, the new point is penalized if it is too close to an existing observation.
 ##' 
 ##' @title Expected Maximin Improvement with m objectives
 ##' 
@@ -9,14 +9,14 @@
 ##' @param critcontrol optional list with arguments: 
 ##'   \itemize{
 ##'   \item \code{nb.samp} number of random samples from the posterior distribution,
-##'        default to \code{100}, increasing gives more reliable results at the cost of longer computation time;
+##'        default to \code{50}, increasing gives more reliable results at the cost of longer computation time;
 ##'   \item  \code{seed} seed used for the random samples.
 ##'   }
 ##'        Options for the \code{\link[GPareto]{checkPredict}} function: \code{threshold} (\code{1e-4}) and \code{distance} (\code{covdist}) are used to avoid numerical issues occuring when adding points too close to the existing ones.
 ##' @param type "\code{SK}" or "\code{UK}" (by default), depending whether uncertainty related to trend estimation 
 ##'        has to be taken into account. 
 ##' @return The Expected Maximin Improvement at \code{x}.
-##' @details It is recommanded to scale objectives to \code{[0,1]}.
+##' @details It is recommanded to scale objectives, e.g. to \code{[0,1]}.
 ##' @seealso \code{\link[DiceOptim]{EI}} from package DiceOptim, \code{\link[GPareto]{crit_EHI}}, \code{\link[GPareto]{crit_SUR}}, \code{\link[GPareto]{crit_SMS}}.
 ##' @export
 ##' @importFrom MASS mvrnorm

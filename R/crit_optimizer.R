@@ -3,10 +3,11 @@
 ##' the maximization of an Expected Improvement or SUR criterion and delivers
 ##' the next point to be visited in a multi-objective EGO-like procedure. \cr \cr
 ##' The latter maximization relies either on a genetic algorithm using derivatives,
-##' \code{\link[rgenoud]{genoud}}, particle swarm algorithm \code{\link[pso]{pso}} or exhaustive search at pre-specified points. 
+##' \code{\link[rgenoud]{genoud}}, particle swarm algorithm \code{\link[pso]{pso}},
+##'  exhaustive search at pre-specified points or on a user defined method. 
 ##' It is important to remark that the information
 ##' needed about the objective function reduces here to the vector of response values
-##' embedded in the models (no call to the objective functions or simulators (except with \code{cheapfun})).
+##' embedded in the models (no call to the objective functions or simulators (except with \code{cheapfn})).
 ##'
 ##' @title Maximization of multiobjective Expected Improvement criteria
 ##' 
@@ -14,23 +15,25 @@
 ##' @param model list of objects of class \code{\link[DiceKriging]{km}}, one for each objective functions,
 ##' @param lower vector of lower bounds for the variables to be optimized over,
 ##' @param upper vector of upper bounds for the variables to be optimized over,
-##' @param cheapfun optional additional fast-to-evaluate objective function (handled next with class \code{\link[GPareto]{fastfun}}), which does not need a kriging model,
+##' @param cheapfn optional additional fast-to-evaluate objective function (handled next with class \code{\link[GPareto]{fastfun}}), which does not need a kriging model,
 ##' @param type "\code{SK}" or "\code{UK}" (default), depending whether uncertainty related to trend estimation has to be taken into account.
 ##' @param paretoFront (optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]}, 
 ##' @param critcontrol optional list of control parameters for criterion \code{crit}, see details.
 ##' Options for the \code{\link[GPareto]{checkPredict}} function: \code{threshold} (\code{1e-4}) and \code{distance} (\code{covdist}) are used to avoid numerical issues occuring when adding points too close to the existing ones.
 ##' @param optimcontrol optional list of control parameters for optimization of the selected infill criterion. 
 ##'       "\code{method}" set the optimization method; one can 
-##'        choose between "\code{discrete}", "\code{pso}" and "\code{genoud}". For each method, further parameters can be set.\cr 
+##'        choose between "\code{discrete}", "\code{pso}" and "\code{genoud}" or a user defined method name (passed to \code{\link[base]{match.fun}}). For each method, further parameters can be set.\cr 
 ##'        For "\code{discrete}", one has to provide the argument "\code{candidate.points}". \cr
 ##'        For "\code{pso}", one can control the maximum number of iterations "\code{maxit}" (\code{400}) and the population size "\code{s}"
-##'        (default :  \code{floor(10+2*sqrt(length(dim)))} (see \code{\link[pso]{psoptim}}). \cr
+##'        (default :  \code{max(20, floor(10+2*sqrt(length(dim))))} (see \code{\link[pso]{psoptim}}). \cr
 ##'        For "\code{genoud}", one can control, among others, "\code{pop.size}" (default :  \code{[N = 3*2^dim} for \code{dim < 6} and  \code{N = 32*dim} otherwise]),
 ##' "\code{max.generations}" (\code{12}), "\code{wait.generations}" (\code{2}), "\code{BFGSburnin}" (\code{2}), \code{BFGSmaxit} (\code{N}) and \code{solution.tolerance} (\code{1e-21})
-##'  of function "\code{genoud}" (see \code{\link[rgenoud]{genoud}}). Numbers into brackets are the default values.
+##'  of function "\code{genoud}" (see \code{\link[rgenoud]{genoud}}). Numbers into brackets are the default values.\cr
+##'  For a user defined method, it must have arguments like the default \code{\link[stats]{optim}} method, i.e. \code{par}, \code{fn}, \code{lower}, \code{upper}, \code{...} and eventually \code{control}, and return a list with \code{par} and \code{value}.
 ##' @param nsteps.remaining Number of iterations remaining in the optimization loop. 
 ##'        Used by "\code{SMS}" to determine the parameter epsilon.
-##'  @return A list with components: 
+##'        
+##' @return A list with components:  
 ##'  \itemize{
 ##'  \item{\code{par}}{: The best set of parameters found,}
 ##'  \item{\code{value}}{: The value of expected improvement at \code{par}.}
@@ -186,9 +189,18 @@
 ##'                             }
 ##'               )
 ##' 
+##' # example using user defined optimizer, here L-BFGS-B from base optim
+##' userOptim <- function(par, fn, lower, upper, control, ...){
+##'   return(optim(par = par, fn = fn, method = "L-BFGS-B", lower = lower, upper = upper,
+##'          control = control, ...))
+##' }
+##' omEGO4bis <- crit_optimizer(crit = "SUR", model = model,  lower = lower, upper = upper, 
+##'                  optimcontrol = list(method = "userOptim"))
+##' print(omEGO4bis)
+##' 
 ##' 
 ##' #---------------------------------------------------------------------------
-##' # crit_SMS surface with problem "P1" with 15 design points, using cheapfun
+##' # crit_SMS surface with problem "P1" with 15 design points, using cheapfn
 ##' #---------------------------------------------------------------------------
 ##' 
 ##' # Optimization with fastfun: SMS with discrete search
@@ -207,13 +219,13 @@
 ##' optimcontrol <- list(method = "pso")
 ##' model2 <- list(mf1)
 ##' omEGO5 <- crit_optimizer(crit = "SMS", model = model2,  lower = lower, upper = upper,
-##'                          cheapfun = f2, 
+##'                          cheapfn = f2, critcontrol = list(refPoint = c(300, 0)),
 ##'                          optimcontrol = list(method = "genoud", pop.size = 200, BFGSburnin = 2))
 ##' print(omEGO5)
 ##' 
 ##' filled.contour(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid), 
 ##'                matrix(pmax(0, SMS_grid_cheap), nrow = n.grid), nlevels = 50,
-##'                main = "SMS criterion with cheap 2nd objective", xlab = expression(x[1]),
+##'                main = "SMS criterion with cheap 2nd objective (>0)", xlab = expression(x[1]),
 ##'                ylab = expression(x[2]), color = terrain.colors,
 ##'                plot.axes = {axis(1); axis(2);
 ##'                             points(design.grid[,1], design.grid[,2], pch = 21, bg = "white")
@@ -223,16 +235,16 @@
 ##' }
 ##' @export
 
-crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfun = NULL, type = "UK", paretoFront = NULL, 
+crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfn = NULL, type = "UK", paretoFront = NULL, 
                         critcontrol = NULL, optimcontrol = NULL, nsteps.remaining = 1){
   ###########################################################################################
   # Finds the maximizer of the criterion
   ###########################################################################################
   if(is.null(optimcontrol$method)) optimcontrol$method <- "genoud"
   
-  if (!is.null(cheapfun)) {
-    fastobs <- apply(model[[1]]@X, 1, cheapfun)
-    fastmod <- fastfun(fn = cheapfun, design = model[[1]]@X, response = fastobs)
+  if (!is.null(cheapfn)) {
+    fastobs <- apply(model[[1]]@X, 1, cheapfn)
+    fastmod <- fastfun(fn = cheapfn, design = model[[1]]@X, response = fastobs)
     model[[length(model)+1]] <- fastmod
   }
   
@@ -252,7 +264,7 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfun = NULL, t
   
   
   if (is.null(critcontrol$refPoint)){    
-    critcontrol$refPoint <- matrix(apply(observations, 2, max) + 1, 1, n.obj) ### Should be changed? !!!
+    critcontrol$refPoint <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj) ### May be changed
     if(crit == "SMS" | crit =="EHI")
       cat("No refPoint provided, ", signif(critcontrol$refPoint, 3), "used \n")
   } 
@@ -261,7 +273,7 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfun = NULL, t
     #-------------------------------------------------------
     currentHV <- dominated_hypervolume(points=t(paretoFront), ref=critcontrol$refPoint)
     if (n.pareto < 2){
-      eps <- rep(0, n.obj)
+      epsilon <- rep(0, n.obj)
     } else {
       spread <- apply(paretoFront,2,max) - apply(paretoFront,2,min)
       c <- 1 - (1 / (2^n.obj) )
@@ -276,11 +288,14 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfun = NULL, t
     
     if (is.unsorted(paretoFront[,1])){
       paretoFront <- paretoFront[sort(paretoFront[,1], index.return=TRUE)[[2]],,drop=FALSE]
-    }  
+    }
+    if(n.obj > 2)
+      critcontrol$seed <- sample.int(1e9,1)
     
     #-------------------------------------------------------
   } else if (crit == "EMI"){
     criterion <- crit_EMI
+    critcontrol$seed <- sample.int(1e9,1)
     
     #-------------------------------------------------------
   } else if (crit=="SUR"){
@@ -291,6 +306,7 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfun = NULL, t
     if(is.null(critcontrol$integration.points)){
       integration.param   <- integration_design_optim(critcontrol$SURcontrol, d, lower, upper, model=model)
       integration.points  <- as.matrix(integration.param$integration.points)
+      integration.weights  <- integration.param$integration.weights
       
       precalc.data <- vector("list", n.obj)
       intpoints.oldmean <- intpoints.oldsd <- matrix(0, n.obj, nrow(integration.points))
@@ -381,6 +397,7 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfun = NULL, t
     if (is.null(optimcontrol$P8)) optimcontrol$P8<-50
     if (is.null(optimcontrol$P9)) optimcontrol$P9<-0
     
+
     domaine <- cbind(lower, upper)
     
     o <- genoud(fn=criterion, nvars=d, max=TRUE, pop.size=optimcontrol$pop.size,
@@ -412,7 +429,7 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfun = NULL, t
     
     control <- list(fnscale=-1, maxit=optimcontrol$maxit, s = optimcontrol$s)
     if (is.null(control$maxit))   control$maxit=400
-    if (is.null(control$s)) control$s = floor(10+2*sqrt(length(d)))
+    if (is.null(control$s)) control$s = max(floor(10+2*sqrt(d)), 20)
     
     o <- psoptim(par = rep(NA, d) , criterion, lower = lower, upper = upper, control = control, model=model, type=type, 
                  paretoFront=paretoFront, critcontrol=critcontrol)
@@ -421,4 +438,20 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfun = NULL, t
     value <- as.matrix(o$value)
     return(list(par=par, value=value))
   }
+  
+  ########################################################################################
+  ## Used defined optimization
+  ########################################################################################
+  optimMethodUser <- match.fun(optimcontrol$method)
+  control <- optimcontrol
+  control$method <- NULL # avoid warnings
+  control$notrace <- NULL # avoid warnings
+  rand_start <- runif(d)*(upper-lower) + lower # random start point
+  o <- optimMethodUser(par = rand_start, fn = criterion, lower = lower, upper = upper,
+                       control = control, model=model, type=type, 
+                       paretoFront=paretoFront, critcontrol=critcontrol)
+  par <- t(as.matrix(o$par))
+  colnames(par) <- colnames(model[[1]]@X)
+  value <- as.matrix(o$value)
+  return(list(par=par, value=value))
 }

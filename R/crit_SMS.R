@@ -1,4 +1,5 @@
 ##' Computes a slightly modified infill Criterion of the SMS-EGO.
+##' To avoid numerical instabilities, an additional penalty is added to the new point if it is too close to an existing observation.
 ##' @title Analytical expression of the SMS-EGO criterion with m>1 objectives
 ##' @param x a vector representing the input for which one wishes to calculate the criterion,
 ##' @param model a list of objects of class \code{\link[DiceKriging]{km}} (one for each objective),
@@ -15,7 +16,7 @@
 ##'        estimation has to be taken into account.
 ##' @references 
 ##' W. Ponweiser, T. Wagner, D. Biermann, M. Vincze (2008), Multiobjective Optimization on a Limited Budget of Evaluations Using Model-Assisted S-Metric Selection,
-##' \emph{Parallel Problem Solving from Nature}, pp. 718-727. Springer, Berlin. \cr \cr
+##' \emph{Parallel Problem Solving from Nature}, pp. 784-794. Springer, Berlin. \cr \cr
 ##' T. Wagner, M. Emmerich, A. Deutz, W. Ponweiser (2010), On expected-improvement criteria for model-based multi-objective optimization.   
 ##' \emph{Parallel Problem Solving from Nature}, pp. 718-727. Springer, Berlin.
 ##' @seealso \code{\link[GPareto]{crit_EHI}}, \code{\link[GPareto]{crit_SUR}}, \code{\link[GPareto]{crit_EMI}}.
@@ -71,58 +72,60 @@ crit_SMS <- function(x, model, paretoFront=NULL, critcontrol=list(epsilon=1e-6, 
   d <- model[[1]]@d
   x.new <- matrix(x, 1, d)
   
+  distp <- 0  # penalty if too close in the checkPredict sense
+  
   if(checkPredict(x, model, type = type, distance = critcontrol$distance, threshold = critcontrol$threshold)){
-    return(0)
-  }else{
-    
-    
-    refPoint  <- critcontrol$refPoint
-    currentHV <- critcontrol$currentHV
-    epsilon   <- critcontrol$epsilon
-    gain      <- critcontrol$gain
-    
-    if(is.null(paretoFront) || is.null(refPoint)) {
-      observations <- matrix(0, model[[1]]@n, n.obj)
-      for (i in 1:n.obj) observations[,i] <- model[[i]]@y
-    }
-    if(is.null(paretoFront)) paretoFront <- t(nondominated_points(t(observations)))
-    if (is.null(refPoint)){
-      refPoint    <- matrix(apply(observations, 2, max) + 1, 1, n.obj)
-      cat("No refPoint provided, ", signif(refPoint, 3), "used \n")
-    }
-    
-    if (is.null(currentHV)) currentHV <- dominated_hypervolume(points=t(paretoFront), ref=refPoint)
-    if (is.null(epsilon))   epsilon <- 1e-6
-    if (is.null(gain))      gain <- 1
-    n.pareto <- nrow(paretoFront)
-    
-    mu    <- rep(NaN, n.obj)
-    sigma <- rep(NaN, n.obj)
-    for (i in 1:n.obj){    
-      pred     <- predict(object=model[[i]], newdata=x.new, type=type, checkNames = FALSE)
-      mu[i]    <- pred$mean
-      sigma[i] <- pred$sd
-    }
-    potSol <- mu - gain*sigma
-    penalty <- 0
-    for (j in 1:n.pareto){
-      # assign penalty to all epsilon-dominated solutions
-      if (min(paretoFront[j,] <= potSol + epsilon) ){
-        p <- -1 + prod(1 + pmax(potSol - paretoFront[j,], rep(0, n.obj)))
-        penalty <- max(penalty, p)
-      }
-    }
-    if (penalty == 0){
-      # non epsilon-dominated solution
-      potFront <- rbind(paretoFront, potSol)
-      mypoints <- t(nondominated_points(t(potFront)))
-      if (is.null(nrow(mypoints))) mypoints <- matrix(mypoints, 1, n.obj)
-      myhv <- dominated_hypervolume(points=t(mypoints), ref=refPoint)
-      f    <- currentHV - myhv
-    } else{
-      f <- penalty
+    # return(0) Not compatible with penalty with SMS
+    distp <- 1 # may be changed
+  }#else{
+  
+  refPoint  <- critcontrol$refPoint
+  currentHV <- critcontrol$currentHV
+  epsilon   <- critcontrol$epsilon
+  gain      <- critcontrol$gain
+  
+  if(is.null(paretoFront) || is.null(refPoint)) {
+    observations <- matrix(0, model[[1]]@n, n.obj)
+    for (i in 1:n.obj) observations[,i] <- model[[i]]@y
+  }
+  if(is.null(paretoFront)) paretoFront <- t(nondominated_points(t(observations)))
+  if (is.null(refPoint)){
+    refPoint    <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj)
+    cat("No refPoint provided, ", signif(refPoint, 3), "used \n")
+  }
+  
+  if (is.null(currentHV)) currentHV <- dominated_hypervolume(points=t(paretoFront), ref=refPoint)
+  if (is.null(epsilon))   epsilon <- 1e-6
+  if (is.null(gain))      gain <- 1
+  n.pareto <- nrow(paretoFront)
+  
+  mu    <- rep(NaN, n.obj)
+  sigma <- rep(NaN, n.obj)
+  for (i in 1:n.obj){    
+    pred     <- predict(object=model[[i]], newdata=x.new, type=type, checkNames = FALSE)
+    mu[i]    <- pred$mean
+    sigma[i] <- pred$sd
+  }
+  potSol <- mu - gain*sigma
+  penalty <- distp
+  for (j in 1:n.pareto){
+    # assign penalty to all epsilon-dominated solutions
+    if (min(paretoFront[j,] <= potSol + epsilon)){
+      p <- -1 + prod(1 + pmax(potSol - paretoFront[j,], rep(0, n.obj)))
+      penalty <- max(penalty, p)
     }
   }
+  if (penalty == 0){
+    # non epsilon-dominated solution
+    potFront <- rbind(paretoFront, potSol)
+    mypoints <- t(nondominated_points(t(potFront)))
+    if (is.null(nrow(mypoints))) mypoints <- matrix(mypoints, 1, n.obj)
+    myhv <- dominated_hypervolume(points=t(mypoints), ref=refPoint)
+    f    <- currentHV - myhv
+  } else{
+    f <- penalty
+  }
+  #}
   
   return(-f)
 }

@@ -1,7 +1,7 @@
-##' Plot the Pareto Front with step functions.
+##' Plot the Pareto front with step functions.
 ##' 
-##' @title Pareto Front visualization
-##' @param nondominatedPoints points considered to plot the Pareto Front with segments, matrix with one point per column,
+##' @title Pareto front visualization
+##' @param nondominatedPoints points considered to plot the Pareto front with segments, matrix with one point per row,
 ##' @param add optional boolean indicating whether a new graphic should be drawn,
 ##' @param max optional boolean indicating whether to display a Pareto front in a maximization context,
 ##' @param ... additional values to be passed to the \code{\link[graphics]{lines}} function.

@@ -4,25 +4,24 @@
 #' 
 #' @param fname name of the function considered,
 #' @param xlim,ylim numeric vectors of length 2, giving the \code{x} and \code{y} coordinates ranges, default is \code{[0,1] x [0,1]},
-#' @param nPointsGrid number of divisions of the grid in each dimension.
-#' @export
-#' 
+#' @param n.grid number of divisions of the grid in each dimension.
+#' @export 
 #' @examples
 #' #------------------------------------------------------------
 #' # Examples with test functions
 #' #------------------------------------------------------------
 #' 
-#' plotParetoGrid("ZDT3", nPointsGrid = 21)
+#' plotParetoGrid("ZDT3", n.grid = 21)
 #' 
-#' plotParetoGrid("P1", nPointsGrid = 21)
+#' plotParetoGrid("P1", n.grid = 21)
 #' 
-#' plotParetoGrid("MOP2", xlim = c(0, 1), ylim = c(0, 1), nPointsGrid = 21) 
+#' plotParetoGrid("MOP2", xlim = c(0, 1), ylim = c(0, 1), n.grid = 21) 
 
 
 
-plotParetoGrid <- function(fname = "ZDT1", xlim = c(0,1), ylim = c(0,1), nPointsGrid = 100){
-  Plan <- expand.grid(seq(xlim[1], xlim[2], length.out = nPointsGrid),
-                      seq(ylim[1], ylim[2], length.out = nPointsGrid))
+plotParetoGrid <- function(fname = "ZDT1", xlim = c(0,1), ylim = c(0,1), n.grid = 100){
+  Plan <- expand.grid(seq(xlim[1], xlim[2], length.out = n.grid),
+                      seq(ylim[1], ylim[2], length.out = n.grid))
   
   response.grid <- apply(Plan, 1, fname)
   

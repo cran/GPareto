@@ -14,10 +14,12 @@
 ##' }
 ##' Depending on the selected criterion, parameters such as reference point for \code{SMS} and \code{EHI} or arguments for \code{\link[GPareto]{integration_design_optim}} with \code{SUR} can be given with \code{critcontrol}.
 ##' Also options for \code{\link[GPareto]{checkPredict}} are available.
-##' More precisions are given in the corresponding help pages. 
+##' More precisions are given in the corresponding help pages.\cr
+##' 
+##' Display of results and various post-processings are available with \code{\link[GPareto]{plotGPareto}}.  
 ##' @param model list of objects of class \code{\link[DiceKriging]{km}}, one for each objective functions,
-##' @param fun the multi-objective function to be minimized (vectorial output), found by a call to \code{\link[base]{match.fun}},
-##' @param cheapfun optional additional fast-to-evaluate objective function (handled next with class \code{\link[GPareto]{fastfun}}), which does not need a kriging model, handled by a call to \code{\link[base]{match.fun}},
+##' @param fn the multi-objective function to be minimized (vectorial output), found by a call to \code{\link[base]{match.fun}},
+##' @param cheapfn optional additional fast-to-evaluate objective function (handled next with class \code{\link[GPareto]{fastfun}}), which does not need a kriging model, handled by a call to \code{\link[base]{match.fun}},
 ##' @param crit choice of multi-objective improvement function: "\code{SMS}", "\code{EHI}", "\code{EMI}" or "\code{SUR}",
 ##' see details below,
 ##' @param nsteps an integer representing the desired number of iterations,
@@ -27,14 +29,12 @@
 ##' @param cov.reestim optional boolean specifying if the kriging hyperparameters should be re-estimated at each iteration,
 ##' @param critcontrol optional list of parameters for criterion \code{crit}, see details,
 ##' @param optimcontrol an optional list of control parameters for optimization of the selected infill criterion:
-##' \itemize{
-##' \item{"\code{method}" can be set to "\code{discrete}", "\code{pso}" or "\code{genoud}". For "\code{discrete}", a matrix \code{candidate.points} must be given,
-##' For "\code{pso}" and "\code{genoud}", specific parameters to the chosen method can also be specified  (see \code{\link[rgenoud]{genoud}} and \code{\link[pso]{psoptim}}).}
-##' \item{Options for the \code{\link[GPareto]{checkPredict}} function: \code{threshold} (\code{1e-4}) and \code{distance} (\code{covdist}) are used to avoid numerical issues occuring when adding points too close to the existing ones.}
-##' }
+##' "\code{method}" can be set to "\code{discrete}", "\code{pso}", "\code{genoud}" or a user defined method name (passed to \code{\link[base]{match.fun}}). For "\code{discrete}", a matrix \code{candidate.points} must be given.
+##' For "\code{pso}" and "\code{genoud}", specific parameters to the chosen method can also be specified  (see \code{\link[rgenoud]{genoud}} and \code{\link[pso]{psoptim}}).
+##' A user defined method must have arguments like the default \code{\link[stats]{optim}} method, i.e. \code{par}, \code{fn}, \code{lower}, \code{upper}, \code{...} and eventually \code{control}.\cr
 ##' Option \code{notrace} can be set to \code{TRUE} to suppress printing of the optimization progresses. 
 ##' 
-##' @param ... additional parameters to be given to the objective \code{fun}.
+##' @param ... additional parameters to be given to the objective \code{fn}.
 ##' @export
 ##' @return
 ##' A list with components:
@@ -75,14 +75,14 @@
 ##' mf2 <- km(~., design = design.grid, response = response.grid[, 2])
 ##' model <- list(mf1, mf2)
 ##' 
-##' nsteps <- 3
+##' nsteps <- 2
 ##' lower <- rep(0, d)
 ##' upper <- rep(1, d)
 ##' 
 ##' # Optimization 1: EHI with pso
 ##' optimcontrol <- list(method = "pso", maxit = 20)
 ##' critcontrol <- list(refPoint = c(1, 10))
-##' omEGO1 <- GParetoptim(model = model, fun = fname, crit = "EHI", nsteps = nsteps,
+##' omEGO1 <- GParetoptim(model = model, fn = fname, crit = "EHI", nsteps = nsteps,
 ##'                      lower = lower, upper = upper, critcontrol = critcontrol,
 ##'                      optimcontrol = optimcontrol)
 ##' print(omEGO1$par)
@@ -92,7 +92,7 @@
 ##' # Optimization 2: SMS with discrete search
 ##' optimcontrol <- list(method = "discrete", candidate.points = test.grid)
 ##' critcontrol <- list(refPoint = c(1, 10))
-##' omEGO2 <- GParetoptim(model = model, fun = fname, crit = "SMS", nsteps = nsteps,
+##' omEGO2 <- GParetoptim(model = model, fn = fname, crit = "SMS", nsteps = nsteps,
 ##'                      lower = lower, upper = upper, critcontrol = critcontrol,
 ##'                      optimcontrol = optimcontrol)
 ##' print(omEGO2$par)
@@ -101,7 +101,7 @@
 ##' # Optimization 3: SUR with genoud
 ##' optimcontrol <- list(method = "genoud", pop.size = 20, max.generations = 10)
 ##' critcontrol <- list(SURcontrol = list(distrib = "SUR", n.points = 100))
-##' omEGO3 <- GParetoptim(model = model, fun = fname, crit = "SUR", nsteps = nsteps,
+##' omEGO3 <- GParetoptim(model = model, fn = fname, crit = "SUR", nsteps = nsteps,
 ##'                      lower = lower, upper = upper, critcontrol = critcontrol,
 ##'                      optimcontrol = optimcontrol)
 ##' print(omEGO3$par)
@@ -110,7 +110,7 @@
 ##' # Optimization 4: EMI with pso
 ##' optimcontrol <- list(method = "pso", maxit = 20)
 ##' critcontrol <- list(nbsamp = 200)
-##' omEGO4 <- GParetoptim(model = model, fun = fname, crit = "EMI", nsteps = nsteps,
+##' omEGO4 <- GParetoptim(model = model, fn = fname, crit = "EMI", nsteps = nsteps,
 ##'                      lower = lower, upper = upper, optimcontrol = optimcontrol)
 ##' print(omEGO4$par)
 ##' print(omEGO4$values)
@@ -120,25 +120,39 @@
 ##'                               seq(0, 1, length.out = 100)), 1, fname)
 ##' plot(t(sol.grid), pch = 20, col = rgb(0, 0, 0, 0.05), xlim = c(0, 1),
 ##'      ylim = c(-2, 10), xlab = expression(f[1]), ylab = expression(f[2]))
-##' points(response.grid[,1], response.grid[,2], col = "black", pch = 20)     
-##' points(omEGO1$values, pch = 17, col = "blue")
+##' plotGPareto(list = omEGO1, add = TRUE,
+##'             control = list(pch = 20, col = "blue", PF.pch = 17,
+##'                            PF.points.col = "blue", PF.line.col = "blue"))
 ##' text(omEGO1$values[,1], omEGO1$values[,2], labels = 1:nsteps, pos = 3, col = "blue")
-##' points(omEGO2$values, pch = 17, col = "green")
+##' plotGPareto(list = omEGO2, add = TRUE,
+##'             control = list(pch = 20, col = "green", PF.pch = 17,
+##'                            PF.points.col = "green", PF.line.col = "green"))
 ##' text(omEGO2$values[,1], omEGO2$values[,2], labels = 1:nsteps, pos = 3, col = "green")
-##' points(omEGO3$values, pch = 17, col = "red")
-##' text(omEGO3$values[,1], omEGO3$values[,2], labels = 1:nsteps, pos = 3, col = "red")
-##' points(omEGO4$values, pch = 17, col = "orange")
+##' plotGPareto(list = omEGO3, add = TRUE,
+##'             control = list(pch = 20, col = "red", PF.pch = 17,
+##'                            PF.points.col = "red", PF.line.col = "red"))
+##' text(omEGO3$values[,1], omEGO3$values[,2], labels = 1:nsteps, pos = 3, col = "red") 
+##' plotGPareto(list = omEGO4, add = TRUE,
+##'             control = list(pch = 20, col = "orange", PF.pch = 17,
+##'                            PF.points.col = "orange", PF.line.col = "orange"))
 ##' text(omEGO4$values[,1], omEGO4$values[,2], labels = 1:nsteps, pos = 3, col = "orange")
+##' points(response.grid[,1], response.grid[,2], col = "black", pch = 20)
 ##' legend("topright", c("EHI", "SMS", "SUR", "EMI"), col = c("blue", "green", "red", "orange"),
 ##'  pch = rep(17,4))
+##'  
+##'  
+##' # Post-processing
+##' plotGPareto(omEGO1, UQ_PF = T, UQ_PS = T, UQ_dens = T)
+##'   
 ##' }
-GParetoptim <- function (model, fun, cheapfun=NULL, crit="SMS", nsteps, lower, upper, type="UK", cov.reestim=TRUE,
+
+GParetoptim <- function (model, fn, cheapfn=NULL, crit="SMS", nsteps, lower, upper, type="UK", cov.reestim=TRUE,
                          critcontrol = NULL,
                          optimcontrol = list(method="genoud", threshold = 1e-5, distance = "euclidean", notrace = FALSE), ...){
   ##########################################################################################
   # Inputs :
   # model: list of 2 or 3 models
-  # fun: objective function, returns 2 or 3 objectives
+  # fn: objective function, returns 2 or 3 objectives
   # nsteps: number of iterations
   # lower, upper: design region
   # optimcontrol, type, CovReEstimate: parameters as in DiceOptim & KrigInv
@@ -146,13 +160,16 @@ GParetoptim <- function (model, fun, cheapfun=NULL, crit="SMS", nsteps, lower, u
   n     <- nrow(model[[1]]@X)
   d     <- model[[1]]@d
   
-  fun <- match.fun(fun)
+  fn <- match.fun(fn)
+  
+  if(is.null(optimcontrol$method))
+    optimcontrol$method <- "genoud"
   
   # Build fastfun if necessary
-  if (!is.null(cheapfun)) {
-    cheapfun <- match.fun(cheapfun)
-    fastobs <- apply(model[[1]]@X, 1, cheapfun)
-    fastmod <- fastfun(fn = cheapfun, design = model[[1]]@X, response = fastobs)
+  if (!is.null(cheapfn)) {
+    cheapfn <- match.fun(cheapfn)
+    fastobs <- apply(model[[1]]@X, 1, cheapfn)
+    fastmod <- fastfun(fn = cheapfn, design = model[[1]]@X, response = fastobs)
     model[[length(model)+1]] <- fastmod
   }else{
     Y.new.cheap = NULL
@@ -187,6 +204,22 @@ GParetoptim <- function (model, fun, cheapfun=NULL, crit="SMS", nsteps, lower, u
     cat("----------------------------\n")
     cat("Ite / Crit / New x / New y \n")
   }
+  paretoFront <- t(nondominated_points(t(observations)))
+  noRef <- FALSE #TRUE if a refPoint is provided
+  if(is.null(critcontrol$refPoint) & (crit == "SMS" | crit =="EHI")){
+    noRef <- TRUE
+    estimatedRef <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj) ### May be changed
+    critcontrol$refPoint <- estimatedRef 
+    if((crit == "SMS" | crit =="EHI") & !notrace)
+      cat("No refPoint provided, ", signif(critcontrol$refPoint, 3), "used \n")
+  }
+  
+  ## Change of seed for optimization unless set for genoud (for now by setting default values)
+  ## NOTE: might be interesting to modify the defaults in crit_optimizer
+  if(is.null(optimcontrol$unif.seed))
+    changeSeed1 <- TRUE
+  if(is.null(optimcontrol$int.seed))
+    changeSeed2 <- TRUE
   
   #### Main loop starts here ################
   for (i in 1:nsteps) {
@@ -195,11 +228,26 @@ GParetoptim <- function (model, fun, cheapfun=NULL, crit="SMS", nsteps, lower, u
     paretoFront <- t(nondominated_points(t(observations)))
     n.pareto    <- nrow(paretoFront)
     
+    ## Change the refPoint if none is provided, if necessary
+    if(noRef & (crit == "SMS" | crit =="EHI") & !notrace){
+      if(any(estimatedRef != matrix(apply(paretoFront, 2, max) + 1, 1, n.obj))){
+        estimatedRef <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj) ### May be changed
+        critcontrol$refPoint <- estimatedRef
+        cat("refPoint changed, ", signif(critcontrol$refPoint, 3), "used \n")
+      }
+    }
+      
+    
     ## Change the seeds for genoud to avoid selecting always the same initial values
-    if(optimcontrol$method == "genoud" & is.null(optimcontrol$unif.seed)){
-      optimcontrol$unif.seed <- runif(1)
+    if(optimcontrol$method == "genoud" & changeSeed1){
+      optimcontrol$unif.seed <- sample.int(1e9, 1)
     }
     
+    if(optimcontrol$method == "genoud" & changeSeed2){
+      optimcontrol$int.seed <- sample.int(1e9, 1)
+    }
+    
+
     # observations removed (could be reintegrated)
     sol <- try(crit_optimizer(crit=crit, model=model, lower=lower, upper=upper, 
                               optimcontrol=optimcontrol, type=type, paretoFront=paretoFront, 
@@ -214,19 +262,27 @@ GParetoptim <- function (model, fun, cheapfun=NULL, crit="SMS", nsteps, lower, u
       par <- values <- c()
       if (i > 1) {
         par <- model[[1]]@X[(n+1):model[[1]]@n,, drop=FALSE]
-        par <- model[[1]]@X[(n+1):model[[1]]@n,, drop=FALSE]
+        # par <- model[[1]]@X[(n+1):model[[1]]@n,, drop=FALSE]
       }
       return(list(par=par, values=values, nsteps = i-1, lastmodel = model))
     }
     
+    ## Check if optimization do not return already known point
+    if(checkPredict(sol$par, model, type = type, distance = critcontrol$distance, threshold = critcontrol$threshold)){
+      if(!notrace)
+        cat("Optimization failed, so a random point is selected (consider increasing the inner optimization budget).\n")
+      sol$par <- matrix(runif(d), nrow = 1)
+    }
+      
+    
     ## Update
     X.new <- matrix(as.numeric(sol$par), nrow=1, ncol=d)
-    Y.new <- try(fun(as.numeric(sol$par), ...))
-    if (!is.null(cheapfun)) {
-      Y.new.cheap <- try(cheapfun(as.numeric(sol$par)))
+    Y.new <- try(fn(as.numeric(sol$par), ...))
+    if (!is.null(cheapfn)) {
+      Y.new.cheap <- try(cheapfn(as.numeric(sol$par)))
     }
     
-    if (typeof(Y.new) == "character" || (!is.null(cheapfun) && typeof(Y.new.cheap) == "character")) {
+    if (typeof(Y.new) == "character" || (!is.null(cheapfn) && typeof(Y.new.cheap) == "character")) {
       if(!notrace){
         cat("Unable to compute objective function at iteration ", i, "- optimization stopped \n")
         cat("Problem occured for the design: ", X.new, "\n")
@@ -235,13 +291,13 @@ GParetoptim <- function (model, fun, cheapfun=NULL, crit="SMS", nsteps, lower, u
       
       par <- values <- c()
       if (i > 1) {
-        par <- model[[1]]@X[(n+1):model[[1]]@n,, drop=FALSE]
+        # par <- model[[1]]@X[(n+1):model[[1]]@n,, drop=FALSE]
         par <- model[[1]]@X[(n+1):model[[1]]@n,, drop=FALSE]
       }
       return(list(par=par, values=values, nsteps = i-1, lastmodel = model))
     }
     Y.new <- c(Y.new, Y.new.cheap)
-    if(!notrace) cat( i, signif(sol$val,3), signif(X.new,3), signif(Y.new,3), "\n")
+    if(!notrace) cat( i, "/", signif(sol$val,3), "/", signif(X.new,3), "/", signif(Y.new,3), "\n", sep = "\t")
     
     # Remove new observation from integration points if discrete case is used
     if (optimcontrol$method=="discrete") {
@@ -262,9 +318,9 @@ GParetoptim <- function (model, fun, cheapfun=NULL, crit="SMS", nsteps, lower, u
         newmodel[[j]] <- try(update(object = model[[j]], newX = X.new, newy=Y.new[j], newX.alreadyExist=FALSE, cov.reestim = FALSE), silent = TRUE)
       }
       if (typeof(newmodel[[j]]) == "character") {
-        cat("Unable to udpate kriging model at iteration", i-1, "- optimization stopped \n")
-        cat("lastmodel is the model at iteration", i-1, "\n")
-        cat("par and values contain the ",i, "th observation \n \n")
+        cat("Unable to udpate kriging model ", j, " at iteration", i-1, "- optimization stopped \n")
+        cat("lastmodel ", j, " is the model at iteration", i-1, "\n")
+        cat("par and values contain the ",i , "th observation \n \n")
         if (i > 1) allX.new <- rbind(model[[1]]@X[(n+1):(n+i-1),, drop=FALSE], X.new)
         return(list(
           par    = allX.new,

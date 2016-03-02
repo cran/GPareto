@@ -9,12 +9,17 @@
 ##' @param type "\code{SK}" or "\code{UK}" (default), depending whether uncertainty related to trend estimation has to be taken into account.
 ##' @details If the distance between \code{x} and the closest observations in \code{model} is below
 ##'  \code{threshold}, \code{x} should not be evaluated to avoid numerical instabilities.
-##' The distance can simply be the Euclidean distance or the distance associated with the covariance : 
-##'   \deqn{d(x,y) = \sqrt{k(x,y) - 2k(x,y) + k(y,y)}}{d(x,y) = \sqrt(k(x,y) - 2k(x,y) + k(y,y))}
+##' The distance can simply be the Euclidean distance or the canonical distance associated with the kriging covariance k: 
+##'   \deqn{d(x,y) = \sqrt{k(x,x) - 2k(x,y) + k(y,y)}.}{d(x,y) = \sqrt(k(x,x) - 2k(x,y) + k(y,y)).} 
 ##'   The last solution is the ratio between the prediction variance at \code{x} and the variance of the process.
 ##' @return \code{TRUE} if the point should not be tested.
 ##' @export
 checkPredict <- function(x, model, threshold = 1e-4, distance = "covdist", type = "UK"){
+  
+  if(is.null(dim(x))){
+    x <- matrix(x, nrow = 1) 
+  }
+  
   if(is.null(distance))
     distance <- "covdist"
   if(is.null(threshold))
@@ -25,26 +30,29 @@ checkPredict <- function(x, model, threshold = 1e-4, distance = "covdist", type 
     tp2 <- matrix(tp1 - as.numeric(x), nrow = model[[1]]@n, byrow = TRUE)^2
     mindist <- min(sqrt(rowSums(tp2)))
   }else{
-    d <- length(which(sapply(model, class) == "km")) # to filter the fastobj (no troubles to update)
+    # d <- length(which(sapply(model, class) == "km")) # to filter the fastobj (no troubles to update)
     if(distance == "covratio"){
       
       mindist <- Inf
-      for(i in 1:d){
-        pred.sd <- predict(object = model[[i]], newdata = x, type = type, checkNames = FALSE)
-        mindist <- min(mindist, pred.sd$sd/sqrt(model[[i]]@covariance@sd2))
+      for(i in 1:length(model)){
+        if(class(model[[i]]) != "fastfun"){
+          pred.sd <- predict(object = model[[i]], newdata = x, type = type, checkNames = FALSE)
+          mindist <- min(mindist, pred.sd$sd/sqrt(model[[i]]@covariance@sd2))
+        }
       }
     }else{
       
       # if one model is likely to be unable to take the new point without numerical instabilities,
       # it should not be evaluated
       mindist <- Inf
-      for(i in 1:d){
-        kxx <- covMat1Mat2(model[[i]]@covariance, matrix(x, nrow = 1), matrix(x, nrow = 1))
-        kxy <- covMat1Mat2(model[[i]]@covariance, matrix(x, nrow = 1), model[[i]]@X)
+      for(i in 1:length(model)){
+        if(class(model[[i]]) != "fastfun"){
+        kxx <- covMat1Mat2(model[[i]]@covariance, x, matrix(x, nrow = 1))
+        kxy <- covMat1Mat2(model[[i]]@covariance, x, model[[i]]@X)
         kyy <- diag(covMat1Mat2(model[[i]]@covariance, model[[i]]@X, model[[i]]@X))
         
-        mindist <- sqrt(pmax(0,min(mindist, min(kxx - 2*as.vector(kxy) + kyy) / model[[i]]@covariance@sd2))) 
-        
+        mindist <- sqrt(pmax(0,min(mindist, min(kxx - 2*as.vector(kxy) + kyy) / model[[i]]@covariance@sd2)))
+        }
       } 
     }
   }

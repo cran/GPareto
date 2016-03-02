@@ -2,6 +2,9 @@
 ##' @title Display the Symmetric Deviation Function
 ##' @param CPF CPF object, see \code{\link[GPareto]{CPF}},
 ##' @param n.grid number of divisions of the grid in each dimension.
+##' @details Display observations in red and the corresponding Pareto front by a step-line. 
+##' The blue line is the estimation of the location of the Pareto front of the kriging models, named Vorob'ev expectation. 
+##' In grayscale is the intensity of the deviation (symmetrical difference) from the Vorob'ev expectation for couples of conditional simulations.
 ##' @export
 ##' @references
 ##' M. Binois, D. Ginsbourger and O. Roustant (2015), Quantifying Uncertainty on Pareto Fronts with Gaussian process conditional simulations, 

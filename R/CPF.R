@@ -1,4 +1,4 @@
-##' Compute (on a grid) the empirical attainment function from conditional simulations 
+##' Compute (on a regular grid) the empirical attainment function from conditional simulations 
 ##' of Gaussian processes corresponding to two objectives. This is used to estimate the Vorob'ev
 ##' expectation of the attained set and the Vorob'ev deviation.
 ##'
@@ -22,19 +22,19 @@
 ##' \itemize{
 ##'  \item{\code{x, y}}{: locations of grid lines at which the values of the attainment
 ##'   are computed,}
-##'  \item{\code{values}}{: a numeric matrix containing the values of the attainment on the grid,}
+##'  \item{\code{values}}{: numeric matrix containing the values of the attainment on the grid,}
 ##'  \item{\code{PF}}{: matrix corresponding to the Pareto front of the observations,}
-##'  \item{\code{responses}}{: a matrix containing the value of the two objective functions, one
+##'  \item{\code{responses}}{: matrix containing the value of the two objective functions, one
 ##' objective per column,}
 ##' \item{\code{fun1sims, fun2sims}}{: conditional simulations of the first/second output,}
 ##' \item{\code{VE}}{: Vorob'ev expectation, computed if \code{compute.VorobExp = TRUE} (default),}
 ##' \item{\code{beta_star}}{: Vorob'ev threshold, computed if \code{compute.VorobExp = TRUE} (default),}
 ##' \item{\code{VD}}{: Vorov'ev deviation, computed if \code{compute.VorobDev = TRUE} (default),}
 ##' }
-##' @details Works with two objectives. The user can provide limits for the grid of
-##'  computation of the attainement function with \code{f1lim} and \code{f2lim}. 
+##' @details Works with two objectives. The user can provide locations of grid lines for
+##'  computation of the attainement function with vectors \code{f1lim} and \code{f2lim}, in the form of regularly spaced points. 
 ##'  It is possible to provide only \code{refPoint} as a reference for hypervolume computations.
-##'  When missing, values are determined from the axis-wise extremum of the simulations.
+##'  When missing, values are determined from the axis-wise extrema of the simulations.
 ##' @seealso Methods \code{coef}, \code{summary} and \code{plot} can be used to get the coefficients from a \code{CPF} object, 
 ##' to obtain a summary or to display the attainment function (with the Vorob'ev expectation if \code{compute.VorobExp} is \code{TRUE}). 
 ##' @importFrom emoa nondominated_points is_dominated dominated_hypervolume
@@ -47,11 +47,13 @@
 ##' \emph{European Journal of Operational Research}, 243(2), 386-394. \cr \cr
 ##' C. Chevalier (2013), \emph{Fast uncertainty reduction strategies relying on Gaussian process models}, University of Bern, PhD thesis. \cr \cr
 ##' I. Molchanov (2005), \emph{Theory of random sets}, Springer.
+##' @export
 ##' @examples
 ##' library(DiceDesign)
 ##' set.seed(42)
 ##' 
-##' nvar <- 2##' 
+##' nvar <- 2
+##' 
 ##' fname <- "P1" # Test function
 ##' 
 ##' # Initial design
@@ -65,7 +67,7 @@
 ##' 
 ##' # Conditional simulations generation with random sampling points 
 ##' nsim <- 40
-##' npointssim <- 200
+##' npointssim <- 150 # increase for better results
 ##' Simu_f1 <- matrix(0, nrow = nsim, ncol = npointssim)
 ##' Simu_f2 <- matrix(0, nrow = nsim, ncol = npointssim)
 ##' design.sim <- array(0, dim = c(npointssim, nvar, nsim))
@@ -86,13 +88,14 @@
 ##' 
 ##' # Graphics
 ##' plot(CPF1)
-##' @export
+##' 
+
 CPF <-
   function(fun1sims, fun2sims, response, paretoFront = NULL, f1lim = NULL, f2lim = NULL, refPoint = NULL,
            n.grid = 100, compute.VorobExp = TRUE, compute.VorobDev = TRUE){
     
     ## @param compute.VorobExpect an optional boolean indicating whether the Vorob'ev expectation
-    ##' should be computed after the attainment , compute.VorobExpect = TRUE
+    ## should be computed after the attainment , compute.VorobExpect = TRUE
     
     if(is.null(paretoFront)){
       paretoFront <- t(nondominated_points(t(response)))
@@ -190,11 +193,11 @@ plot.CPF <- function(x, ...){
                    main = "Empirical attainment function",
                    xlab = expression(f[1]), ylab = expression(f[2]),
                    plot.axes = { axis(1); axis(2);
-                     #points(x$PF[1, ], x$PF[2, ], pch = 17, col = "blue");
-                     points(x$response[,1], x$responses[,2], pch = 17, col="blue");
-                     contour(x$x, x$y, x$values, add=T,
-                             levels = c(0,0.2,0.4,0.6,0.8,1),labcex=1);
-                     plotParetoEmp(x$PF,col="blue", lwd = 2);
+                                 #points(x$PF[1, ], x$PF[2, ], pch = 17, col = "blue");
+                                 points(x$response[,1], x$responses[,2], pch = 17, col="blue");
+                                 contour(x$x, x$y, x$values, add=T,
+                                         levels = c(0,0.2,0.4,0.6,0.8,1),labcex=1);
+                                 plotParetoEmp(x$PF,col="blue", lwd = 2);
                    }
     )
   }else{
@@ -204,12 +207,12 @@ plot.CPF <- function(x, ...){
                                      list(a = formatC(x$beta_star, digits = 2))),
                    xlab = expression(f[1]), ylab = expression(f[2]),
                    plot.axes = { axis(1); axis(2);
-                     #points(x$PF[1, ], x$PF[2, ], pch = 17, col = "blue");
-                     points(x$response[,1], x$responses[,2], pch = 17, col="blue");
-                     contour(x$x, x$y, x$values, add=T,
-                             levels = c(0,0.2,0.4,0.6,0.8,1),labcex=1);
-                     plotParetoEmp(x$PF,col="blue", lwd = 2);
-                     plotParetoEmp(x$VE,col="cyan",lwd=2)
+                                 #points(x$PF[1, ], x$PF[2, ], pch = 17, col = "blue");
+                                 points(x$response[,1], x$responses[,2], pch = 17, col="blue");
+                                 contour(x$x, x$y, x$values, add=T,
+                                         levels = c(0,0.2,0.4,0.6,0.8,1),labcex=1);
+                                 plotParetoEmp(x$PF,col="blue", lwd = 2);
+                                 plotParetoEmp(x$VE,col="cyan",lwd=2)
                    }
     )
   }

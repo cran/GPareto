@@ -1,7 +1,7 @@
 ##' Multi-objective Expected Hypervolume Improvement with respect to the
-##' current Pareto front. With two objective the analytical formula is used, while 
+##' current Pareto front. With two objectives the analytical formula is used, while 
 ##' Sample Average Approximation (SAA) is used with more objectives.
-##' To avoid numerical instabilities, the new point is evaluated only if it is not too close to an existing observation.
+##' To avoid numerical instabilities, the new point is penalized if it is too close to an existing observation.
 ##' 
 ##' @title Expected Hypervolume Improvement with m objectives
 ##' 
@@ -11,7 +11,7 @@
 ##' @param critcontrol optional list with arguments:
 ##' \itemize{
 ##' \item \code{nb.samp} number of random samples from the posterior distribution (with more than two objectives),
-##'        default to \code{100}, increasing gives more reliable results at the cost of longer computation time;
+##'        default to \code{50}, increasing gives more reliable results at the cost of longer computation time;
 ##' \item \code{seed} seed used for the random samples (with more than two objectives);
 ##' \item \code{refPoint} reference point for Hypervolume Expected Improvement. If not provided, it is set to the maximum of each objective + 1. 
 ##' } 
@@ -35,7 +35,6 @@
 ##' J. D. Svenson (2011), \emph{Computer Experiments: Multiobjective Optimization and Sensitivity Analysis}, Ohio State University, PhD thesis.  \cr \cr
 ##' M. T. Emmerich, A. H. Deutz, J. W. Klinkenberg (2011), Hypervolume-based expected improvement: Monotonicity properties and exact computation,
 ##' \emph{Evolutionary Computation (CEC)}, 2147-2154. \cr \cr
-
 ##' 
 ##' @examples
 ##' #---------------------------------------------------------------------------
@@ -66,7 +65,7 @@
 ##'                             }
 ##'               )
 crit_EHI <- function(x, model, paretoFront = NULL,
-                     critcontrol = list(nb.samp = 100, seed = 42, refPoint = NULL),
+                     critcontrol = list(nb.samp = 50, seed = 42, refPoint = NULL),
                      type = "UK"){
 
   nobj     <- length(model)
