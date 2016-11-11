@@ -47,11 +47,11 @@ checkPredict <- function(x, model, threshold = 1e-4, distance = "covdist", type 
       mindist <- Inf
       for(i in 1:length(model)){
         if(class(model[[i]]) != "fastfun"){
-        kxx <- covMat1Mat2(model[[i]]@covariance, x, matrix(x, nrow = 1))
-        kxy <- covMat1Mat2(model[[i]]@covariance, x, model[[i]]@X)
-        kyy <- diag(covMat1Mat2(model[[i]]@covariance, model[[i]]@X, model[[i]]@X))
+        kxx <- drop(covMat1Mat2(model[[i]]@covariance, x, matrix(x, nrow = 1)))
+        kxy <- drop(covMat1Mat2(model[[i]]@covariance, x, model[[i]]@X))
+        kyy <- drop(diag(covMat1Mat2(model[[i]]@covariance, model[[i]]@X, model[[i]]@X)))
         
-        mindist <- sqrt(pmax(0,min(mindist, min(kxx - 2*as.vector(kxy) + kyy) / model[[i]]@covariance@sd2)))
+        mindist <- sqrt(pmax(0, min(mindist, min(kxx - 2*kxy + kyy) / model[[i]]@covariance@sd2)))
         }
       } 
     }

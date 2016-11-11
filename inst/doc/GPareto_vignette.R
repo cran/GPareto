@@ -1,5 +1,5 @@
-## ----setup, echo=FALSE, include=FALSE, cache=FALSE--------------------------------------
-library(knitr)
+## ----setup, echo=FALSE, include=FALSE---------------------------------------------------
+library("knitr")
 # set global chunk options
 opts_chunk$set(prompt=TRUE)
 options(replace.assign=TRUE, width=90, prompt="R> ")
@@ -8,8 +8,8 @@ opts_chunk$set(background='#FFFFFF')
 # opts_chunk$set(cache=TRUE, autodep=TRUE)
 opts_chunk$set(comment=NA)
 
-## ----EpsInd,echo=FALSE, fig.width = 5, fig.height = 5, message=FALSE--------------------
-library(GPareto)
+## ----EpsInd,echo=FALSE, fig.width = 5, fig.height = 5, message=FALSE, warning=FALSE-----
+library("GPareto", quietly = TRUE)
 ParetoRef <- matrix(c(0.2,0.22,0.35,0.5,0.65,0.8,0.7,0.6,0.55,0.4,0.25,0.2),6,2)
 
 ## Epsilon indicateur
@@ -52,7 +52,7 @@ lines(c(0.1,0.1,0.2), c(1,0.9,0.9), lty = 5, lwd = 1, col = "green")
 points(x = 1, y = 1, pch = 13, cex = 2)
 
 ## ----Simus, echo=FALSE, results='hide', fig.width=8, fig.height=3, warning=FALSE, message=FALSE----
-library(DiceKriging)
+library("DiceKriging", quietly = TRUE)
 
 set.seed(42)
 
@@ -64,7 +64,7 @@ f2 <- function(x){
   10*x*sin(10*x)+10*x*cos(20*x)
 }
 
-design.grid=c(0,0.15,0.25,0.3,0.48,0.95,1)
+design.grid <- c(0,0.15,0.25,0.3,0.48,0.95,1)
 
 response1 <- forrester(design.grid)
 
@@ -76,10 +76,10 @@ model2 <- km(~1,design=data.frame(x=design.grid),response=response2,covtype="mat
              coef.cov = 0.387, coef.var = 260)
 
 
-x <- seq(0,1,, 1000)
-model1.predict <- predict(model1,newdata=x,checkNames=TRUE,"UK")
+x <- seq(0,1, length.out = 1000)
+model1.predict <- predict(model1, newdata = data.frame(x = x), checkNames = TRUE, "UK")
 
-model2.predict <- predict(model2,newdata=x,checkNames=TRUE,"UK")
+model2.predict <- predict(model2, newdata = data.frame(x = x), checkNames = TRUE, "UK")
 
 
 n_sim=50
@@ -125,8 +125,8 @@ points(response1, response2, pch = 17)
 par(mfrow = c(1,1))
 rm(list = ls())
 
-## ----echo=FALSE, message=FALSE----------------------------------------------------------
-library(DiceDesign)
+## ----echo=FALSE, message=FALSE, warning=FALSE-------------------------------------------
+library("DiceDesign", quietly = TRUE)
 set.seed(42)
 
 #-----------------------------------------------------
@@ -161,14 +161,14 @@ res <- GParetoptim(model = model, fn = MOP2, crit = "EHI",
                    nsteps = 7, lower = 0, upper = 1, 
                    critcontrol = list(refPoint = c(2, 2)))
 
-## ----echo=FALSE-------------------------------------------------------------------------
+## ----echo=FALSE, warning=FALSE----------------------------------------------------------
 mf1.res <- res$lastmodel[[1]]
 mf2.res <- res$lastmodel[[2]]
 p1.res <- predict(mf1.res, newdata = X, checkNames = FALSE, type = "UK")
 p2.res <- predict(mf2.res, newdata = X, checkNames = FALSE, type = "UK")
 ParetoFront.res <- t(nondominated_points(t(cbind(mf1.res@y, mf2.res@y))))
 
-## ----fig.width=8, fig.height=6, echo=FALSE----------------------------------------------
+## ----fig.width=8, fig.height=6, echo=FALSE,warning=FALSE--------------------------------
 # Plots
 par(mfrow=c(3,3))
 plot(X, F[,1], type = "l", main = "Objective 1", xlab = "x", ylab = expression(f[1]))
@@ -239,7 +239,8 @@ test.grid <- expand.grid(x.grid, x.grid)
 SURcontrol <- list(integration.points = test.grid)
 omEGO1 <- crit_optimizer(crit = "SUR", model = model,  
                          lower = c(0, 0), upper = c(1, 1),
-                         optimcontrol = list(method = "genoud", pop.size = 20),
+                         optimcontrol = list(method = "genoud", pop.size = 20,
+                                             int.seed = 2, unif.seed = 3),
                          critcontrol = list(SURcontrol = SURcontrol))
 
 ## ----echo=TRUE,message=FALSE,warning=FALSE, results='hide'------------------------------
@@ -252,8 +253,8 @@ omEGO2 <- crit_optimizer(crit="SUR", model=model2,  lower=c(0,0), upper=c(1,1),
                          optimcontrol=list(method="pso", maxit=50),
                          critcontrol=list(SURcontrol=SURcontrol))
 
-## ----echo=FALSE,message=FALSE,warnings=FALSE, results='hide'----------------------------
-library(KrigInv)
+## ----echo=FALSE,message=FALSE,warning=FALSE, results='hide'-----------------------------
+library("KrigInv", quietly = TRUE)
 n.grid <- 21
 x.grid <- seq(0, 1, length.out=n.grid)
 
@@ -285,7 +286,7 @@ critcontrol2 <- list(integration.points = integration.points,
 SUR_grid <- apply(test.grid, 1, crit_SUR, model=model, critcontrol=critcontrol)
 SUR_grid2 <- apply(test.grid, 1, crit_SUR, model=model2, critcontrol=critcontrol2)
 
-## ----echo=FALSE,message=FALSE,warnings=FALSE, fig.height=6, fig.width=6-----------------
+## ----echo=FALSE,message=FALSE,warning=FALSE, fig.height=6, fig.width=6------------------
 filled.contour(x.grid, x.grid, 
                matrix(SUR_grid, n.grid), main="SUR Criterion",
                xlab=expression(x[1]), ylab=expression(x[2]), color=terrain.colors,
@@ -294,7 +295,7 @@ filled.contour(x.grid, x.grid,
                  points(omEGO1$par, col="red", pch=4, cex=2)})
 
 
-## ----echo=FALSE,message=FALSE,warnings=FALSE, fig.height=6, fig.width=6-----------------
+## ----echo=FALSE,message=FALSE,warning=FALSE, fig.height=6, fig.width=6------------------
 filled.contour(x.grid, x.grid,
                matrix((SUR_grid2), n.grid), main="SUR Criterion (fastfun)",
                xlab=expression(x[1]), ylab=expression(x[2]), color=terrain.colors,
@@ -304,20 +305,22 @@ filled.contour(x.grid, x.grid,
                }
 )
 
-## ----UQ_opt1, warning=FALSE, results='hide', fig.show='hide'----------------------------
+## ----UQ_opt1, message = FALSE, warning=FALSE, results='hide', fig.show='hide'-----------
 sol <- GParetoptim(model = model, fn = fun, crit = "SUR", nsteps = 7,
-                   lower = c(0, 0), upper = c(1, 1),
+                   lower = c(0, 0), upper = c(1, 1), 
+                   optimcontrol = list(method = "pso"),
                    critcontrol = list(SURcontrol = list(distrib = "SUR",
-                                                        n.points = 100)))
+                                                        n.points = 50)))
 
-## ----UQ_opt2, warning=FALSE, results='hide', fig.show='hide'----------------------------
+## ----UQ_opt2, message=FALSE, warning=FALSE, results='hide', fig.show='hide'-------------
 solFast <- GParetoptim(model = list(mf1), fn = fun1, cheapfn = fun2,
                    crit = "SUR", nsteps = 7, lower = c(0, 0), upper = c(1, 1),
+                   optimcontrol = list(method = "pso"),
                    critcontrol = list(SURcontrol = list(distrib = "SUR",
-                                                    n.points = 100)))
+                                                    n.points = 50)))
 
 ## ----UQ_1, warning=FALSE, fig.show='hide',fig.width=6, fig.height=5---------------------
-lim1 <- seq(-50, 240, length.out = 101); lim2 <- seq(-35, 0, length.out = 101)
+lim1 <- seq(-50, 240, length.out = 41); lim2 <- seq(-35, 0, length.out = 41)
 plotGPareto(sol, UQ_PF = TRUE, UQ_PS = TRUE, UQ_dens = TRUE,
             control = list(f1lim = lim1, f2lim = lim2))
 
@@ -325,17 +328,17 @@ plotGPareto(sol, UQ_PF = TRUE, UQ_PS = TRUE, UQ_dens = TRUE,
 plotGPareto(solFast, UQ_PF = TRUE, UQ_PS = TRUE, UQ_dens = TRUE,
             control = list(f1lim = lim1, f2lim = lim2))
 
-## ---------------------------------------------------------------------------------------
-newPoint <- getDesign(model = sol$lastmodel, target = c(33.5, -26.5),
+## ----warning=FALSE, message=FALSE-------------------------------------------------------
+newPoint <- getDesign(model = sol$lastmodel, target = c(42, -26),
                       lower=c(0, 0), upper=c(1, 1))
 newPoint
 
-## ----echo=TRUE,message=FALSE,warnings=FALSE, results='hide'-----------------------------
+## ----echo=TRUE,message=FALSE,warning=FALSE, results='hide'------------------------------
 res <- easyGParetoptim(fn = DTLZ2, budget = 50,
-                       lower = rep(0, 4), upper = rep(1, 4))
+                       lower = rep(0, 4), upper = rep(1, 4), control = list(maxit = 40))
 
 ## ----ex3DPS, fig.show='hide',fig.width=c(5,6), fig.height=c(5,6)------------------------
 plotGPareto(res, UQ_PS = TRUE,
             control = list(lower = rep(0, 4), upper = rep(1, 4), option = "mean",
-                           resolution = 25, nintegpoints = 200))
+                           resolution = 25, nintegpoints = 100))
 

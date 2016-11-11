@@ -88,8 +88,8 @@ The \pkg{GPareto} package for \proglang{R} provides multi-objective optimization
 \usepackage{paralist}
 \usepackage{caption,subcaption}
 
-<<setup, echo=FALSE, include=FALSE, cache=FALSE>>=
-library(knitr)
+<<setup, echo=FALSE, include=FALSE>>=
+library("knitr")
 # set global chunk options
 opts_chunk$set(prompt=TRUE)
 options(replace.assign=TRUE, width=90, prompt="R> ")
@@ -211,8 +211,8 @@ An illustrative example is given in Figure \ref{fig:misc}.
 \centering
 \begin{subfigure}[b]{0.49\linewidth}
 \centering
-<<EpsInd,echo=FALSE, fig.width = 5, fig.height = 5, message=FALSE>>=
-library(GPareto)
+<<EpsInd,echo=FALSE, fig.width = 5, fig.height = 5, message=FALSE, warning=FALSE>>=
+library("GPareto", quietly = TRUE)
 ParetoRef <- matrix(c(0.2,0.22,0.35,0.5,0.65,0.8,0.7,0.6,0.55,0.4,0.25,0.2),6,2)
 
 ## Epsilon indicateur
@@ -304,7 +304,7 @@ Visually, representing the deviation for each random Pareto front directly illus
 
 \begin{figure}%
 <<Simus, echo=FALSE, results='hide', fig.width=8, fig.height=3, warning=FALSE, message=FALSE>>=
-library(DiceKriging)
+library("DiceKriging", quietly = TRUE)
 
 set.seed(42)
 
@@ -316,7 +316,7 @@ f2 <- function(x){
   10*x*sin(10*x)+10*x*cos(20*x)
 }
 
-design.grid=c(0,0.15,0.25,0.3,0.48,0.95,1)
+design.grid <- c(0,0.15,0.25,0.3,0.48,0.95,1)
 
 response1 <- forrester(design.grid)
 
@@ -328,10 +328,10 @@ model2 <- km(~1,design=data.frame(x=design.grid),response=response2,covtype="mat
              coef.cov = 0.387, coef.var = 260)
 
 
-x <- seq(0,1,, 1000)
-model1.predict <- predict(model1,newdata=x,checkNames=TRUE,"UK")
+x <- seq(0,1, length.out = 1000)
+model1.predict <- predict(model1, newdata = data.frame(x = x), checkNames = TRUE, "UK")
 
-model2.predict <- predict(model2,newdata=x,checkNames=TRUE,"UK")
+model2.predict <- predict(model2, newdata = data.frame(x = x), checkNames = TRUE, "UK")
 
 
 n_sim=50
@@ -447,7 +447,7 @@ Passing any other optimization method is also possible, given that it works as t
 
 \subsubsection{crit functions}
 \label{subsub:crit}
-Four criteria are available in \pkg{GPareto} 1.0.2: 
+Four criteria are available in \pkg{GPareto} 1.0.3: 
 \begin{itemize}
 	\item \code{crit_SMS} for the SMS-EGO criterion \citep{Ponweiser2008a,Wagner2010} (based on the Matlab source code of the authors);
 	\item \code{crit_EHI} for the Expected Hypervolume Improvement criterion \citep{Emmerich2011} (based on the Matlab source code of the authors for the bi-objective case);
@@ -579,8 +579,8 @@ $$\text{MOP2}(x)=\left\{ \begin{array}{l c r}
  f_2 &=& 1 - \exp((1+x)^2)
 \end{array} \right. $$
 
-<<echo=FALSE, message=FALSE>>=
-library(DiceDesign)
+<<echo=FALSE, message=FALSE, warning=FALSE>>=
+library("DiceDesign", quietly = TRUE)
 set.seed(42)
 
 #-----------------------------------------------------
@@ -624,7 +624,7 @@ res <- GParetoptim(model = model, fn = MOP2, crit = "EHI",
 By default, \code{GParetoptim} prints the points chosen and their corresponding evaluations, along with the value of the sampling criterion. 
 The criterion here decreases almost monotonically, since as the exploration progresses the remaining improvement (hypervolume gain obtained by a new observation) decreases.
 Figure \ref{fig:ex1d} illustrates the results of this 1D problem, and shows the ability of the GP models to accurately learn functions on target regions (the Pareto set) based on a few observations. 
-<<echo=FALSE>>=
+<<echo=FALSE, warning=FALSE>>=
 mf1.res <- res$lastmodel[[1]]
 mf2.res <- res$lastmodel[[2]]
 p1.res <- predict(mf1.res, newdata = X, checkNames = FALSE, type = "UK")
@@ -636,7 +636,7 @@ ParetoFront.res <- t(nondominated_points(t(cbind(mf1.res@y, mf2.res@y))))
 
 \begin{figure}[!ht]
 \centering
-<<fig.width=8, fig.height=6, echo=FALSE>>=
+<<fig.width=8, fig.height=6, echo=FALSE,warning=FALSE>>=
 # Plots
 par(mfrow=c(3,3))
 plot(X, F[,1], type = "l", main = "Objective 1", xlab = "x", ylab = expression(f[1]))
@@ -748,7 +748,8 @@ test.grid <- expand.grid(x.grid, x.grid)
 SURcontrol <- list(integration.points = test.grid)
 omEGO1 <- crit_optimizer(crit = "SUR", model = model,  
                          lower = c(0, 0), upper = c(1, 1),
-                         optimcontrol = list(method = "genoud", pop.size = 20),
+                         optimcontrol = list(method = "genoud", pop.size = 20,
+                                             int.seed = 2, unif.seed = 3),
                          critcontrol = list(SURcontrol = SURcontrol))
 @
 
@@ -768,8 +769,8 @@ omEGO2 <- crit_optimizer(crit="SUR", model=model2,  lower=c(0,0), upper=c(1,1),
                          critcontrol=list(SURcontrol=SURcontrol))
 @
 
-<<echo=FALSE,message=FALSE,warnings=FALSE, results='hide'>>=
-library(KrigInv)
+<<echo=FALSE,message=FALSE,warning=FALSE, results='hide'>>=
+library("KrigInv", quietly = TRUE)
 n.grid <- 21
 x.grid <- seq(0, 1, length.out=n.grid)
 
@@ -813,7 +814,7 @@ from the ones given by the other setup. On both cases, the inner optimization lo
 \centering
 \begin{subfigure}[b]{0.49\linewidth}
 \centering
-<<echo=FALSE,message=FALSE,warnings=FALSE, fig.height=6, fig.width=6>>=
+<<echo=FALSE,message=FALSE,warning=FALSE, fig.height=6, fig.width=6>>=
 filled.contour(x.grid, x.grid, 
                matrix(SUR_grid, n.grid), main="SUR Criterion",
                xlab=expression(x[1]), ylab=expression(x[2]), color=terrain.colors,
@@ -824,7 +825,7 @@ filled.contour(x.grid, x.grid,
 @
 \end{subfigure}
 \begin{subfigure}[b]{0.49\linewidth}
-<<echo=FALSE,message=FALSE,warnings=FALSE, fig.height=6, fig.width=6>>=
+<<echo=FALSE,message=FALSE,warning=FALSE, fig.height=6, fig.width=6>>=
 filled.contour(x.grid, x.grid,
                matrix((SUR_grid2), n.grid), main="SUR Criterion (fastfun)",
                xlab=expression(x[1]), ylab=expression(x[2]), color=terrain.colors,
@@ -840,28 +841,30 @@ filled.contour(x.grid, x.grid,
 \end{figure}
 
 Now, we apply ten steps of SUR, first with two regular objectives, then with the \texttt{fastfun} setting:
-<<UQ_opt1, warning=FALSE, results='hide', fig.show='hide'>>=
+<<UQ_opt1, message = FALSE, warning=FALSE, results='hide', fig.show='hide'>>=
 sol <- GParetoptim(model = model, fn = fun, crit = "SUR", nsteps = 7,
-                   lower = c(0, 0), upper = c(1, 1),
+                   lower = c(0, 0), upper = c(1, 1), 
+                   optimcontrol = list(method = "pso"),
                    critcontrol = list(SURcontrol = list(distrib = "SUR",
-                                                        n.points = 100)))
+                                                        n.points = 50)))
 @
 
-<<UQ_opt2, warning=FALSE, results='hide', fig.show='hide'>>=
+<<UQ_opt2, message=FALSE, warning=FALSE, results='hide', fig.show='hide'>>=
 solFast <- GParetoptim(model = list(mf1), fn = fun1, cheapfn = fun2,
                    crit = "SUR", nsteps = 7, lower = c(0, 0), upper = c(1, 1),
+                   optimcontrol = list(method = "pso"),
                    critcontrol = list(SURcontrol = list(distrib = "SUR",
-                                                    n.points = 100)))
+                                                    n.points = 50)))
 @
 
 
 Then, we generate the post-treatment processes using \texttt{plotGPareto}. 
 The graphical outputs are given in Figure \ref{fig:ex3}. 
-Optional parameters \texttt{f1lim} and \texttt{f1lim} are used to fix bounds for the top graphs to allow better comparison.
+Optional parameters \texttt{f1lim} and \texttt{f2lim} are used to fix bounds for the top graphs to allow better comparison.
 
 
 <<UQ_1, warning=FALSE, fig.show='hide',fig.width=6, fig.height=5>>=
-lim1 <- seq(-50, 240, length.out = 101); lim2 <- seq(-35, 0, length.out = 101)
+lim1 <- seq(-50, 240, length.out = 41); lim2 <- seq(-35, 0, length.out = 41)
 plotGPareto(sol, UQ_PF = TRUE, UQ_PS = TRUE, UQ_dens = TRUE,
             control = list(f1lim = lim1, f2lim = lim2))
 @
@@ -876,7 +879,7 @@ the Pareto front obtained this way is much more accurate (Figure \ref{fig:ex3}, 
 Interestingly, the two Vorob'ev expectations are similar, and provide a very good prediction of
 the actual Pareto front (Figure \ref{fig:P1}), except for the lowest values of the first objective. 
 However, the Vorob'ev deviations (grey areas) show a higher local uncertainty for this part of the front.
-Overall the Vorob'ev deviation values (429 and 145, resp.\@) indicate a substantially better confidence on the predicted Pareto front
+Overall the Vorob'ev deviation values (368 and 296, resp.\@) indicate a substantially better confidence on the predicted Pareto front
 using \texttt{fastfun}.
 
 The probability and density plots (Figure \ref{fig:ex3}, second and third rows, respectively) provide complementary information on the Pareto set (input space). The probability plots indicate interesting (white) and uninteresting (black) regions, as well as uncertain ones (gray), but do not provide a clear insight on the Pareto set. Here, on both cases, the large gray areas show that additional observations may be beneficial, which is consistent with the large difference between the current Pareto front and the Vorob'ev expectation (Figure \ref{fig:ex3}, top).
@@ -918,13 +921,13 @@ Finally, one may want to extract points from the Vorob'ev expectation of the Par
 (that is, the input realizing a particular trade-off) that have not been observed yet.
 To this end, the \texttt{getDesign} function returns the most probable design given a target in the objective space,
 and can be called as follow:
-<<>>=
-newPoint <- getDesign(model = sol$lastmodel, target = c(33.5, -26.5),
+<<warning=FALSE, message=FALSE>>=
+newPoint <- getDesign(model = sol$lastmodel, target = c(42, -26),
                       lower=c(0, 0), upper=c(1, 1))
 newPoint
 @
 
-Here, we have chosen a target $[33.5,-26.5]$ that is on the Vorob'ev expectation, where the uncertainty is small but where no observation is near (Figure \ref{fig:ex3}, top left). The \texttt{getDesign} output is a list with the value of the design (\texttt{par}), the value of the criterion, i.e., the probability that the \texttt{newPoint} objective is not dominated by the target) (\texttt{value}, here 50\%) and the GP prediction of each objective with the associated uncertainty ((\texttt{mean}), (\texttt{sd}) and confidence intervals). Here, the value of the second objective reaches the target with large confidence, but the first objective value is quite uncertain.
+Here, we have chosen a target $[42,-26]$ that is on the Vorob'ev expectation, where the uncertainty is small but where no observation is near (Figure \ref{fig:ex3}, top left). The \texttt{getDesign} output is a list with the value of the design (\texttt{par}), the value of the criterion, i.e., the probability that the \texttt{newPoint} objective is not dominated by the target) (\texttt{value}, here 50\%) and the GP prediction of each objective with the associated uncertainty ((\texttt{mean}), (\texttt{sd}) and confidence intervals). Here, the value of the second objective reaches the target with large confidence, but the first objective value is quite uncertain.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -941,9 +944,9 @@ $$\text{DTLZ2}(x)=\left\{ \begin{array}{l c r}
 This time we simply use \texttt{easyGParetoptim} to solve the problem without having to train or prepare models.
 
 
-<<echo=TRUE,message=FALSE,warnings=FALSE, results='hide'>>=
+<<echo=TRUE,message=FALSE,warning=FALSE, results='hide'>>=
 res <- easyGParetoptim(fn = DTLZ2, budget = 50,
-                       lower = rep(0, 4), upper = rep(1, 4))
+                       lower = rep(0, 4), upper = rep(1, 4), control = list(maxit = 40))
 @
 
   
@@ -955,7 +958,7 @@ of integration points (\texttt{nintegpoints}) to avoid overly costly figures.
 <<ex3DPS, fig.show='hide',fig.width=c(5,6), fig.height=c(5,6)>>=
 plotGPareto(res, UQ_PS = TRUE,
             control = list(lower = rep(0, 4), upper = rep(1, 4), option = "mean",
-                           resolution = 25, nintegpoints = 200))
+                           resolution = 25, nintegpoints = 100))
 @
 
 The graphical outputs are shown in Figure \ref{fig:DTLZ2}.

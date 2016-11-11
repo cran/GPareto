@@ -1,4 +1,8 @@
-## GPareto 1.0.2
+## GPareto 1.0.3
+
+## change / GPareto 1.0.2
+  * update the vignette
+  * changes in checkPredict for matrix/vector arithmetics
 
 ## change / GPareto 1.0.1
   * new function 'easyGParetoptim', a user-friendly wrapper of the function 'GParetoptim' with arguments as the base optim method
