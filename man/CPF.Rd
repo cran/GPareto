@@ -111,4 +111,3 @@ I. Molchanov (2005), \emph{Theory of random sets}, Springer.
 Methods \code{coef}, \code{summary} and \code{plot} can be used to get the coefficients from a \code{CPF} object, 
 to obtain a summary or to display the attainment function (with the Vorob'ev expectation if \code{compute.VorobExp} is \code{TRUE}).
 }
-

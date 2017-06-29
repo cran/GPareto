@@ -77,4 +77,3 @@ nDesign2 <- getDesign(sol$lastmodel, target = target2, lower = rep(0, d), upper 
 points(t(nDesign2$mean), col = "darkgreen", pch = 20)
 }
 }
-

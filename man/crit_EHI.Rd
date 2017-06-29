@@ -5,21 +5,24 @@
 \title{Expected Hypervolume Improvement with m objectives}
 \usage{
 crit_EHI(x, model, paretoFront = NULL, critcontrol = list(nb.samp = 50, seed
-  = 42, refPoint = NULL), type = "UK")
+  = 42), type = "UK")
 }
 \arguments{
 \item{x}{a vector representing the input for which one wishes to calculate \code{EHI},}
 
 \item{model}{list of objects of class \code{\link[DiceKriging]{km}}, one for each objective functions,}
 
-\item{paretoFront}{(optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]},}
+\item{paretoFront}{(optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]}, or any reference set of observations,}
 
 \item{critcontrol}{optional list with arguments:
 \itemize{
 \item \code{nb.samp} number of random samples from the posterior distribution (with more than two objectives),
        default to \code{50}, increasing gives more reliable results at the cost of longer computation time;
 \item \code{seed} seed used for the random samples (with more than two objectives);
-\item \code{refPoint} reference point for Hypervolume Expected Improvement. If not provided, it is set to the maximum of each objective + 1. 
+\item \code{refPoint} reference point for Hypervolume Expected Improvement;
+\item \code{extendper} if no reference point \code{refPoint} is provided,
+ for each objective it is fixed to the maximum over the Pareto front plus extendper times the range, 
+ Default value to \code{0.2}, corresponding to \code{1.1} for a scaled objective with a Pareto front in \code{[0,1]^n.obj}.
 } 
   
        Options for the \code{\link[GPareto]{checkPredict}} function: \code{threshold} (\code{1e-4}) and \code{distance} (\code{covdist}) are used to avoid numerical issues occuring when adding points too close to the existing ones.}
@@ -39,7 +42,7 @@ To avoid numerical instabilities, the new point is penalized if it is too close 
 \details{
 The computation of the analytical formula with two objectives is adapted from the Matlab source code by Michael Emmerich and Andre Deutz, LIACS, 
          Leiden University, 2010 available here :
-         \url{http://natcomp.liacs.nl/code/HV_based_expected_improvement.zip}.
+         \url{http://liacs.leidenuniv.nl/~csmoda/code/HV_based_expected_improvement.zip}.
 }
 \examples{
 #---------------------------------------------------------------------------
@@ -78,4 +81,3 @@ M. T. Emmerich, A. H. Deutz, J. W. Klinkenberg (2011), Hypervolume-based expecte
 \seealso{
 \code{\link[DiceOptim]{EI}} from package DiceOptim, \code{\link[GPareto]{crit_EMI}}, \code{\link[GPareto]{crit_SUR}}, \code{\link[GPareto]{crit_SMS}}.
 }
-

@@ -4,8 +4,8 @@
 \name{fastfun-class}
 \alias{fastfun-class}
 \alias{predict,fastfun-method}
-\alias{simulate,fastfun-method}
 \alias{update,fastfun-method}
+\alias{simulate,fastfun-method}
 \title{Class for fast to compute objective.}
 \usage{
 \S4method{predict}{fastfun}(object, newdata, ...)
@@ -54,6 +54,7 @@ Class for fast to compute objective.
 
 \item \code{simulate}: Simulate responses values (for compatibility with methods using \code{\link[DiceKriging]{simulate}})
 }}
+
 \section{Slots}{
 
 \describe{
@@ -67,8 +68,9 @@ Class for fast to compute objective.
 
 \item{\code{fun}}{the evaluator function.}
 }}
+
 \section{Objects from the Class }{
  To create a \code{fastfun} object, use \code{\link[GPareto]{fastfun}}. See also this function for more details and examples.
 }
-\keyword{internal}
 
+\keyword{internal}

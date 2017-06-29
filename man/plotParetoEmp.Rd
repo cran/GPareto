@@ -36,4 +36,3 @@ plotParetoEmp(cbind(x, y), col = "red", add = FALSE)
 
 plotParetoEmp(cbind(x, y), col = "blue", max = TRUE)
 }
-

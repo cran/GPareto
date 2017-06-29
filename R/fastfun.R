@@ -1,7 +1,7 @@
-##' Modification of an R function to be used as with methods \code{predict} and \code{update} (similar to a \code{\link[DiceKriging]{km}} object). 
+##' Modification of an R function to be used with methods \code{predict} and \code{update} (similar to a \code{\link[DiceKriging]{km}} object). 
 ##' It creates an S4 object which contains the values corresponding to evaluations of other costly observations.
 ##' It is useful when an objective can be evaluated fast.
-##' @title Fastfun function
+##' @title Fast-to-evaluate function wrapper
 ##' @param fn the evaluator function, found by a call to \code{\link[base]{match.fun}},
 ##' @param design a data frame representing the design of experiments.
 ##' The ith row contains the values of the d input variables corresponding to the ith evaluation.
@@ -173,12 +173,12 @@ setMethod("predict", "fastfun",
 ##****************************************************************************
 
 update.fastfun <- function(object, newX, newy, ...){
-    object@X <- rbind(object@X, matrix(newX, ncol=ncol(object@X), byrow=TRUE))
-    object@y <- rbind(object@y, matrix(newy, ncol=1, byrow=TRUE))
-    
-    object@n <- as.integer(object@n + 1)
-    
-    return(object)
+  object@X <- rbind(object@X, matrix(newX, ncol=ncol(object@X), byrow=TRUE))
+  object@y <- rbind(object@y, matrix(newy, ncol=1, byrow=TRUE))
+  
+  object@n <- as.integer(object@n + 1)
+  
+  return(object)
 }
 
 if(!isGeneric("update")) {

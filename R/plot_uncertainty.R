@@ -27,7 +27,7 @@
 ##' res1 <- easyGParetoptim(fn=fname, lower=lower, upper=upper, budget=15, 
 ##' control=list(method="EHI", inneroptim="pso", maxit=20))
 ##' 
-##' plot_uncertainty(res1$history$model, lower = lower, upper = upper)
+##' plot_uncertainty(res1$model, lower = lower, upper = upper)
 ##' 
 ##' #---------------------------------------------------------------------------
 ##' # 4D, bi-objective function
@@ -40,10 +40,10 @@
 ##' res <- easyGParetoptim(fn=fname, lower=lower, upper=upper, budget = 40, 
 ##' control=list(method="EHI", inneroptim="pso", maxit=40))
 ##' 
-##' plot_uncertainty(res$history$model, lower = lower, upper = upper, resolution = 31)
+##' plot_uncertainty(res$model, lower = lower, upper = upper, resolution = 31)
 ##' } 
 plot_uncertainty <- function(model, paretoFront = NULL, type = "pn", lower, upper,
-                              resolution = 51, option = "mean", nintegpoints = 400){
+                             resolution = 51, option = "mean", nintegpoints = 400){
   if(is.null(resolution)) resolution <- 51
   n.obj <- length(model)
   observations <- matrix(0, model[[1]]@n, n.obj)
@@ -56,7 +56,7 @@ plot_uncertainty <- function(model, paretoFront = NULL, type = "pn", lower, uppe
   if(model[[1]]@d == 1){
     xgrid <- matrix(seq(lower, upper, length.out = resolution), ncol = 1)
     pn <- prob.of.non.domination(paretoFront = paretoFront, model = model,
-                                               integration.points = xgrid)
+                                 integration.points = xgrid)
     plot(xgrid, pn, type = "l")
     points(model[[1]]@X, rep(0, model[[1]]@n), pch = 24, bg = "yellow")
   }
@@ -73,7 +73,7 @@ plot_uncertainty <- function(model, paretoFront = NULL, type = "pn", lower, uppe
                    plot.axes={axis(1);axis(2);
                      points(model[[1]]@X[is.dom,], pch = 24, bg = "yellow");
                      points(model[[1]]@X[!is.dom,], pch = 23, bg = "green", cex=1.2)}
-                   )
+    )
   }
   
   ## nD case

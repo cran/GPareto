@@ -37,10 +37,11 @@
 ##'   \item \code{displaytype} type of display for \code{UQ_dens}, see \code{\link[ks]{plot.kde}},
 ##'   \item \code{printVD} logical, if \code{TRUE} and \code{UQ_PF} is \code{TRUE} as well, print the value of the Vorob'ev deviation,
 ##'   \item \code{meshsize3d} mesh size of the perspective view for 3-objective problems,
-##'   \item \code{theta}, \code{phi} angles for perspective view of 3-objective problems.
+##'   \item \code{theta}, \code{phi} angles for perspective view of 3-objective problems,
+##'   \item \code{add_denoised_PF} if \code{TRUE}, in the noisy case, add the Pareto front from the estimated mean of the observations.
 ##' }
 ##' @export
-##' @importFrom graphics abline persp 
+##' @importFrom graphics abline persp
 ##' @references
 ##' M. Binois, D. Ginsbourger and O. Roustant (2015), Quantifying Uncertainty on Pareto Fronts with Gaussian process conditional simulations, 
 ##' \emph{European Journal of Operational Research}, 243(2), 386-394. \cr \cr
@@ -64,6 +65,15 @@
 ##' ## With post-processing
 ##' plotGPareto(res, UQ_PF = TRUE, UQ_PS = TRUE, UQ_dens = TRUE)
 ##' 
+##' ## With noise
+##' noise.var <- c(10, 2)
+##' funnoise <- function(x) {P1(x) + sqrt(noise.var)*rnorm(n=2)}
+##' res <- easyGParetoptim(fn=funnoise, lower=lower, upper=upper, budget=15, noise.var=noise.var,
+##'                        control=list(method="EHI", inneroptim="pso", maxit=20))
+##'                        
+##' plotGPareto(res, control=list(add_denoised_PF=FALSE)) # noisy observations only
+##' plotGPareto(res)  
+##' 
 ##' }
 plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens = FALSE,
                         lower = NULL, upper = NULL,
@@ -71,7 +81,8 @@ plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens 
                                        PF.points.col = "blue", VE.line.col = "cyan",
                                        nsim = 100, npsim = 1500, gridtype = "runif",
                                        displaytype = "persp", printVD = TRUE,
-                                       meshsize3d = 50, theta = -25, phi = 10)){
+                                       meshsize3d = 50, theta = -25, phi = 10,
+                                       add_denoised_PF = TRUE)){
   # Check of arguments
   if(is.null(control$pch)) control$pch <- 20
   if(is.null(control$col)) control$col <- "red"
@@ -87,6 +98,9 @@ plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens 
   if(is.null(control$meshsize3d)) control$meshsize3d <- 50
   if(is.null(control$theta)) control$theta <- -25
   if(is.null(control$phi)) control$phi <- 10
+  if(is.null(control$add_denoised_PF)) control$add_denoised_PF <- TRUE
+  if(is.null(res$model) && !res$lastmodel[[1]]@noise.flag) control$add_denoised_PF <- FALSE # no noise
+  if(is.null(res$lastmodel) && !res$model[[1]]@noise.flag) control$add_denoised_PF <- FALSE # no noise 
   
   if(is.null(lower)) lower <- rep(0, ncol(res$par))
   if(is.null(upper)) upper <- rep(1, ncol(res$par))
@@ -111,24 +125,63 @@ plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens 
                  pch = control$pch, col = control$col)
         }
       }
-      
+      ## easyGParetoptim
       if(!is.null(res$history)){
-        plotParetoEmp(res$value, col = control$PF.line.col)
-        points(res$value, col = control$PF.points.col, pch = control$PF.pch)
-      }else{
+        plotParetoEmp(t(nondominated_points(t(res$history$y))), col = control$PF.line.col)
+        if(res$model[[1]]@noise.flag && control$add_denoised_PF) 
+          points(res$value, col = control$PF.points.col, pch = control$PF.pch)
+      } else {## GParetoptim
         plotParetoEmp(t(nondominated_points(t(cbind(res$lastmodel[[1]]@y, res$lastmodel[[2]]@y)))),
                       col = control$PF.line.col)
-        points(t(nondominated_points(t(cbind(res$lastmodel[[1]]@y, res$lastmodel[[2]]@y)))),
-               col = control$PF.points.col, pch = control$PF.pch)
+        if(res$lastmodel[[1]]@noise.flag && control$add_denoised_PF)
+          points(t(nondominated_points(t(cbind(res$lastmodel[[1]]@y, res$lastmodel[[2]]@y)))),
+                 col = control$PF.points.col, pch = control$PF.pch)
       }
-    }else{
-      if(n.obj == 3){
+      
+      ## Noisy case
+      if(control$add_denoised_PF){
         if(!is.null(res$history)){
-          ally <- res$value
+          if(res$model[[1]]@noise.flag){
+            smoothed_preds <- predict_kms(res$model, newdata=res$model[[1]]@X, type="UK", checkNames = FALSE, 
+                                          light.return = TRUE, cov.compute = FALSE)$mean
+            smoothed_preds <- t(nondominated_points(smoothed_preds))
+            plotParetoEmp(smoothed_preds, col = control$PF.line.col, lty = 3)
+            points(smoothed_preds, col = control$PF.points.col, pch = 2)
+          }
         }else{
-          ally <- cbind(res$lastmodel[[1]]@y, res$lastmodel[[2]]@y, res$lastmodel[[3]]@y)
+          if(res$lastmodel[[1]]@noise.flag){
+            smoothed_preds <- predict_kms(res$lastmodel, newdata=res$lastmodel[[1]]@X, type="UK", checkNames = FALSE, 
+                                          light.return = TRUE, cov.compute = FALSE)$mean
+            smoothed_preds <- t(nondominated_points(smoothed_preds))
+            plotParetoEmp(smoothed_preds, col = control$PF.line.col, lty = 3)
+            points(smoothed_preds, col = control$PF.points.col, pch = 2)
+          }
         }
-        
+      }
+      
+      
+      
+      
+    }else{
+      if(!is.null(res$history)){ #easyGPareto
+        if (control$add_denoised_PF){
+          ally <- res$y.denoised
+        } else {
+          ally <- res$history$y
+        }
+      } else {
+        if(res$lastmodel[[1]]@noise.flag){#GParetoptim.noisy
+          if (control$add_denoised_PF){ 
+            ally <- t(predict_kms(res$lastmodel, newdata=res$lastmodel[[1]]@X, type="UK", checkNames = FALSE, 
+                                  light.return = TRUE, cov.compute = FALSE)$mean)
+          } else {
+            ally <- Reduce(cbind, lapply(res$lastmodel, slot, "y"))
+          }
+        } else {#GParetoptim
+          ally <- Reduce(cbind, lapply(res$lastmodel, slot, "y"))
+        }
+      }
+      if(n.obj == 3){
         ally <- apply(ally, c(1,2), round, digits = 4)
         ally <- ally[!duplicated(ally),]
         
@@ -164,28 +217,22 @@ plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens 
         dom_elements <- apply(rawGrid, 1, function(x){is_dominated(cbind(as.vector(x), t(ally - 1e-6)))[1]})
         rawGrid <- rawGrid[dom_elements,]
         
-
+        
         
         xygrid <- as.matrix(expand.grid(xax, yax))
         z <- apply(xygrid, 1, function(x){
-                                          tmp <- rawGrid[which(rawGrid[,1] == x[1] & rawGrid[,2] == x[2]),3]
-                                          if(length(tmp) == 0) return(NA)
-                                          return(min(tmp))
-                                          }
+          tmp <- rawGrid[which(rawGrid[,1] == x[1] & rawGrid[,2] == x[2]),3]
+          if(length(tmp) == 0) return(NA)
+          return(min(tmp))
+        }
         )
         
         persp(x = xax, y = yax, z = matrix(z, nrow = length(xax)), theta = control$theta, phi = control$phi, scale = TRUE,
               ticktype = "detailed", xlab = "f1", ylab = "f2", zlab = "f3")
-
+        
         
       }else{
-        if(!is.null(res$history)){
-          parplotPF_nd(res$history$y, add = add)
-        }else{
-          ally <- NULL
-          for (i in 1:length(res$lastmodel)) ally <- cbind(ally, res$lastmodel[[i]]@y)
-          parplotPF_nd(ally, add = add)
-        }
+        parplotPF_nd(ally, add = add)
       }
     }
   }else{
@@ -215,18 +262,32 @@ plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens 
     }
     
     if(!is.null(res$history)){
-      Simu_f1 <- simulate(res$history$model[[1]], nsim = control$nsim, newdata = simPoints, cond = TRUE,
+      Simu_f1 <- simulate(res$model[[1]], nsim = control$nsim, newdata = simPoints, cond = TRUE,
                           checkNames = FALSE, nugget.sim = 10^-8)
-      Simu_f2 <- simulate(res$history$model[[2]], nsim = control$nsim, newdata = simPoints, cond = TRUE,
+      Simu_f2 <- simulate(res$model[[2]], nsim = control$nsim, newdata = simPoints, cond = TRUE,
                           checkNames = FALSE, nugget.sim = 10^-8)
-      CPF <- CPF(Simu_f1, Simu_f2, res$history$y, f1lim = control$f1lim, f2lim = control$f2lim)
+      
+      if(res$model[[1]]@noise.flag){
+        smoothed_preds <- matrix(c(max(Simu_f1), max(Simu_f2)), ncol = 2)
+      }else{
+        smoothed_preds <- NULL
+      }
+      
+      CPF <- CPF(Simu_f1, Simu_f2, res$history$y, f1lim = control$f1lim, f2lim = control$f2lim, paretoFront = smoothed_preds)
     }else{
       Simu_f1 <- simulate(res$lastmodel[[1]], nsim = control$nsim, newdata = simPoints, cond = TRUE,
                           checkNames = FALSE, nugget.sim = 10^-8)
       Simu_f2 <- simulate(res$lastmodel[[2]], nsim = control$nsim, newdata = simPoints, cond = TRUE,
                           checkNames = FALSE, nugget.sim = 10^-8)
+      if(res$lastmodel[[1]]@noise.flag){
+        smoothed_preds <- matrix(c(max(Simu_f1), max(Simu_f2)), ncol = 2)
+      }else{
+        smoothed_preds <- NULL
+      }
+      
       CPF <- CPF(Simu_f1, Simu_f2, cbind(res$lastmodel[[1]]@y, res$lastmodel[[2]]@y),
-                 f1lim = control$f1lim, f2lim = control$f2lim)
+                 f1lim = control$f1lim, f2lim = control$f2lim,
+                 paretoFront = smoothed_preds)
     }
     if(control$printVD) cat("Vorob'ev deviation: ", CPF$VD, "\n")
     
@@ -243,7 +304,7 @@ plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens 
   
   if(UQ_PS){
     if(!is.null(res$history)){
-      plot_uncertainty(res$history$model, lower = lower, upper = upper, resolution = control$resolution,
+      plot_uncertainty(res$model, lower = lower, upper = upper, resolution = control$resolution,
                        nintegpoints = control$nintegpoints, option = control$option)
     }else{
       plot_uncertainty(res$lastmodel, lower = lower, upper = upper, resolution = control$resolution,
@@ -255,9 +316,9 @@ plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens 
     # reuse of conditional simulations to compute CPS if Simu_f1 is already created
     if(!exists("Simu_f1")){
       if(!is.null(res$history)){
-        Simu_f1 <- simulate(res$history$model[[1]], nsim = control$nsim, newdata = simPoints, cond = TRUE,
+        Simu_f1 <- simulate(res$model[[1]], nsim = control$nsim, newdata = simPoints, cond = TRUE,
                             checkNames = FALSE, nugget.sim = 10^-8)
-        Simu_f2 <- simulate(res$history$model[[2]], nsim = control$nsim, newdata = simPoints, cond = TRUE,
+        Simu_f2 <- simulate(res$model[[2]], nsim = control$nsim, newdata = simPoints, cond = TRUE,
                             checkNames = FALSE, nugget.sim = 10^-8)
       }else{
         Simu_f1 <- simulate(res$lastmodel[[1]], nsim = control$nsim, newdata = simPoints, cond = TRUE,
@@ -274,7 +335,7 @@ plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens 
     }
     
     if(!is.null(res$history)){
-      estDens <- ParetoSetDensity(model = res$history$model, lower = lower, upper = upper,
+      estDens <- ParetoSetDensity(model = res$model, lower = lower, upper = upper,
                                   CPS = non_dom_set)
     }else{
       estDens <- ParetoSetDensity(model = res$lastmodel, lower = lower, upper = upper,

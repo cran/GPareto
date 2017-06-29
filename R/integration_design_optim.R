@@ -18,7 +18,9 @@
 ##' \emph{Statistics and Computing}.
 ##' @seealso \code{\link[GPareto]{GParetoptim}} \code{\link[GPareto]{crit_SUR}} \code{\link[KrigInv]{integration_design}}
 ##' @details 
-##' Options for the \code{SURcontrol} list are :
+##' The \code{SURcontrol} argument is a list with possible entries \code{integration.points}, \code{integration.weights}, \code{n.points},
+##' \code{n.candidates}, \code{distrib}, \code{init.distrib} and \code{init.distrib.spec}. It can be used 
+##' in one of the three following ways:
 ##' \itemize{
 ##'   \item A) If nothing is specified, \code{100 * d} points are chosen using the Sobol sequence;
 ##'   \item B) One can directly set the field \code{integration.points} (\code{p * d} matrix) for prespecified integration points. 
@@ -97,7 +99,7 @@ integration_design_optim <- function(SURcontrol=NULL,d=NULL,lower,upper,model=NU
   if(SURcontrol$distrib=="sobol"){
     integration.points <- lower+sobol(n=SURcontrol$n.points,dim=d)*(upper-lower)
     if(d==1) integration.points <- matrix(integration.points,ncol=1)
-    if(!is.null(model)) colnames(integration.points)<- colnames(model@X)
+    if(!is.null(model)) colnames(integration.points)<- colnames(model[[1]]@X)
     result$integration.points <- integration.points
     result$integration.weights<-NULL
     return(result)
@@ -106,7 +108,7 @@ integration_design_optim <- function(SURcontrol=NULL,d=NULL,lower,upper,model=NU
   if(SURcontrol$distrib=="MC"){
     integration.points <- lower+matrix(runif(d*SURcontrol$n.points),ncol=d)*(upper-lower)
     if(d==1) integration.points <- matrix(integration.points,ncol=1)
-    if(!is.null(model)) colnames(integration.points)<- colnames(model@X)
+    if(!is.null(model)) colnames(integration.points)<- colnames(model[[1]]@X)
     result$integration.points <- integration.points
     result$integration.weights<-NULL
     return(result)
@@ -163,4 +165,4 @@ integration_design_optim <- function(SURcontrol=NULL,d=NULL,lower,upper,model=NU
     result$integration.weights <- integration.weights
     return(result)
   }
-  }
+}

@@ -8,8 +8,8 @@ plotGPareto(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE,
   UQ_dens = FALSE, lower = NULL, upper = NULL, control = list(pch = 20,
   col = "red", PF.line.col = "cyan", PF.pch = 17, PF.points.col = "blue",
   VE.line.col = "cyan", nsim = 100, npsim = 1500, gridtype = "runif",
-  displaytype = "persp", printVD = TRUE, meshsize3d = 50, theta = -25, phi =
-  10))
+  displaytype = "persp", printVD = TRUE, meshsize3d = 50, theta = -25, phi = 10,
+  add_denoised_PF = TRUE))
 }
 \arguments{
 \item{res}{list returned by \code{\link[GPareto]{GParetoptim}} or \code{\link[GPareto]{easyGParetoptim}},}
@@ -60,7 +60,8 @@ Various parameters can be used for the display of results and/or passed to subse
   \item \code{displaytype} type of display for \code{UQ_dens}, see \code{\link[ks]{plot.kde}},
   \item \code{printVD} logical, if \code{TRUE} and \code{UQ_PF} is \code{TRUE} as well, print the value of the Vorob'ev deviation,
   \item \code{meshsize3d} mesh size of the perspective view for 3-objective problems,
-  \item \code{theta}, \code{phi} angles for perspective view of 3-objective problems.
+  \item \code{theta}, \code{phi} angles for perspective view of 3-objective problems,
+  \item \code{add_denoised_PF} if \code{TRUE}, in the noisy case, add the Pareto front from the estimated mean of the observations.
 }
 }
 \examples{
@@ -82,6 +83,15 @@ plotGPareto(res)
 ## With post-processing
 plotGPareto(res, UQ_PF = TRUE, UQ_PS = TRUE, UQ_dens = TRUE)
 
+## With noise
+noise.var <- c(10, 2)
+funnoise <- function(x) {P1(x) + sqrt(noise.var)*rnorm(n=2)}
+res <- easyGParetoptim(fn=funnoise, lower=lower, upper=upper, budget=15, noise.var=noise.var,
+                       control=list(method="EHI", inneroptim="pso", maxit=20))
+                       
+plotGPareto(res, control=list(add_denoised_PF=FALSE)) # noisy observations only
+plotGPareto(res)  
+
 }
 }
 \references{
@@ -89,4 +99,3 @@ M. Binois, D. Ginsbourger and O. Roustant (2015), Quantifying Uncertainty on Par
 \emph{European Journal of Operational Research}, 243(2), 386-394. \cr \cr
 A. Inselberg (2009), \emph{Parallel coordinates}, Springer.
 }
-

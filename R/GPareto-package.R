@@ -1,8 +1,8 @@
 ##' Multi-objective optimization and quantification of uncertainty on Pareto fronts, using Gaussian process models.
 ##' @title Package GPareto
 ##' @author Mickael Binois, Victor Picheny
-##' @docType package
-##' @name GPareto
+##' @name GPareto-package
+##' @aliases GPareto
 ##' @references
 ##' M. Binois, D. Ginsbourger and O. Roustant (2015), Quantifying Uncertainty on Pareto Fronts with Gaussian process conditional simulations, 
 ##' \emph{European Journal of Operational Research}, 243(2), 386-394. \cr \cr
@@ -58,6 +58,7 @@
 ##' # Postprocessing
 ##' plotGPareto(omEGO, add= FALSE, UQ_PF = TRUE, UQ_PS = TRUE, UQ_dens = TRUE)
 ##' 
+##' }
 ##' #------------------------------------------------------------
 ##' # Example 2 : Surrogate-based multi-objective Optimization including a cheap function
 ##' #------------------------------------------------------------
@@ -84,16 +85,19 @@
 ##' # Optimization with fastfun: hypervolume with discrete search
 ##' 
 ##' optimcontrol <- list(method = "discrete", candidate.points = test.grid)
-##' omEGO3 <- GParetoptim(model = model, fn = fname, cheapfn = branin, crit = "SMS",
+##' omEGO2 <- GParetoptim(model = model, fn = fname, cheapfn = branin, crit = "SMS",
 ##'                       nsteps = nsteps, lower = lower, upper = upper,
 ##'                       optimcontrol = optimcontrol)
-##' print(omEGO3$par)
-##' print(omEGO3$values) 
-##' plotGPareto(omEGO3)
+##' print(omEGO2$par)
+##' print(omEGO2$values)
+##' 
+##' \dontrun{ 
+##' plotGPareto(omEGO2)
 ##' 
 ##' #------------------------------------------------------------
 ##' # Example 3 : Surrogate-based multi-objective Optimization (4 objectives)
 ##' #------------------------------------------------------------
+
 ##' set.seed(42)
 ##' library(DiceDesign)
 ##' 
@@ -112,11 +116,11 @@
 ##' nsteps <- 5 
 ##' lower <- rep(0, d) 
 ##' upper <- rep(1, d)     
-##' omEGO4 <- GParetoptim(model = list(mf1, mf2, mf3, mf4), fn = fname, crit = "EMI",
+##' omEGO3 <- GParetoptim(model = list(mf1, mf2, mf3, mf4), fn = fname, crit = "EMI",
 ##'                       nsteps = nsteps, lower = lower, upper = upper, nobj = 4)
-##' print(omEGO4$par)
-##' print(omEGO4$values)
-##' plotGPareto(omEGO4)
+##' print(omEGO3$par)
+##' print(omEGO3$values)
+##' plotGPareto(omEGO3)
 ##' 
 ##' #------------------------------------------------------------
 ##' # Example 4 : quantification of uncertainty on Pareto front

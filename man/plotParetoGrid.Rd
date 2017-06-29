@@ -28,4 +28,3 @@ plotParetoGrid("P1", n.grid = 21)
 
 plotParetoGrid("MOP2", xlim = c(0, 1), ylim = c(0, 1), n.grid = 21) 
 }
-

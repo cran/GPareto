@@ -42,10 +42,10 @@ plotSymDifRNP <- function(set1, set2, xlim, ylim, fill = "black", add = "FALSE",
   )
   )
   #points(t(up),col="blue")
- 
+  
   #   plot(t(up))
   #   points(-t(lo),col="blue",pch=20)
-
+  
   lo = lo[,order(lo[1,])]
   up = up[,order(up[1,])]
   

@@ -45,7 +45,7 @@ upper <- rep(1, n_var)
 res1 <- easyGParetoptim(fn=fname, lower=lower, upper=upper, budget=15, 
 control=list(method="EHI", inneroptim="pso", maxit=20))
 
-plot_uncertainty(res1$history$model, lower = lower, upper = upper)
+plot_uncertainty(res1$model, lower = lower, upper = upper)
 
 #---------------------------------------------------------------------------
 # 4D, bi-objective function
@@ -58,7 +58,6 @@ upper <- rep(1, n_var)
 res <- easyGParetoptim(fn=fname, lower=lower, upper=upper, budget = 40, 
 control=list(method="EHI", inneroptim="pso", maxit=40))
 
-plot_uncertainty(res$history$model, lower = lower, upper = upper, resolution = 31)
+plot_uncertainty(res$model, lower = lower, upper = upper, resolution = 31)
 } 
 }
-

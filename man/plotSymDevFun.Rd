@@ -65,4 +65,3 @@ plotSymDevFun(CPF1)
 M. Binois, D. Ginsbourger and O. Roustant (2015), Quantifying Uncertainty on Pareto Fronts with Gaussian process conditional simulations, 
 \emph{European Journal of Operational Research}, 243(2), 386-394. \cr \cr
 }
-

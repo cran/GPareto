@@ -1,4 +1,14 @@
-## GPareto 1.0.3
+## GPareto 1.1.0
+
+## change / GPareto 1.0.3
+  * easyGParetoptim and GParetoptim now allow noisy objectives, with the noise.var argument
+  * resolve inconsistency with integration.points in GParetoptim
+  * use faster options of predict.km when possible, predict_kms function to predict on a list of models
+  * n.steps.remaining now is an element of crit_control
+  * arguments for check_predict only in crit_control for all functions
+  * EMI is now computed using the semi-analytical formula for 2 objectives (if the range of objective is small enough, for stability)
+  * quietly load KrigInv in the vignette to solve rebuilding issues
+  * warnings from genoud are suppressed unless trace is high enough
 
 ## change / GPareto 1.0.2
   * update the vignette
@@ -30,9 +40,7 @@
   * correct bug in MOP2
   * correct bug with 'crit_EHI' when PF is provided but not refPoint
 
-
 ## change / GPareto 1.0.0
-
   * update of references
   * bug corrected in 'plotParetoEmp' to account for the case with a single point
   * possibility in 'plotParetoEmp' to display a Pareto front with maximization

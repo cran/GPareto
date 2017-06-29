@@ -4,20 +4,22 @@
 \alias{crit_SMS}
 \title{Analytical expression of the SMS-EGO criterion with m>1 objectives}
 \usage{
-crit_SMS(x, model, paretoFront = NULL, critcontrol = list(epsilon = 1e-06,
-  gain = 1), type = "UK")
+crit_SMS(x, model, paretoFront = NULL, critcontrol = NULL, type = "UK")
 }
 \arguments{
 \item{x}{a vector representing the input for which one wishes to calculate the criterion,}
 
 \item{model}{a list of objects of class \code{\link[DiceKriging]{km}} (one for each objective),}
 
-\item{paretoFront}{(optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]},}
+\item{paretoFront}{(optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]}, or any reference set of observations,}
 
 \item{critcontrol}{list with arguments: 
 \itemize{
 \item \code{currentHV} current hypervolume;
 \item \code{refPoint} reference point for hypervolume computations;
+\item \code{extendper} if no reference point \code{refPoint} is provided,
+ for each objective it is fixed to the maximum over the Pareto front plus extendper times the range. 
+ Default value to \code{0.2}, corresponding to \code{1.1} for a scaled objective with a Pareto front in \code{[0,1]^n.obj};
 \item \code{epsilon} optional value to use in additive epsilon dominance;
 \item \code{gain} optional gain factor for sigma.
 }
@@ -30,7 +32,7 @@ estimation has to be taken into account.}
 Value of the criterion.
 }
 \description{
-Computes a slightly modified infill Criterion of the SMS-EGO.
+Computes a slightly modified infill Criterion of the SMS-EGO. 
 To avoid numerical instabilities, an additional penalty is added to the new point if it is too close to an existing observation.
 }
 \examples{
@@ -74,4 +76,3 @@ T. Wagner, M. Emmerich, A. Deutz, W. Ponweiser (2010), On expected-improvement c
 \seealso{
 \code{\link[GPareto]{crit_EHI}}, \code{\link[GPareto]{crit_SUR}}, \code{\link[GPareto]{crit_EMI}}.
 }
-

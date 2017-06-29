@@ -4,15 +4,14 @@
 \alias{crit_SUR}
 \title{Analytical expression of the SUR criterion for two or three objectives.}
 \usage{
-crit_SUR(x, model, paretoFront = NULL, critcontrol = list(SURcontrol =
-  NULL), type = "UK")
+crit_SUR(x, model, paretoFront = NULL, critcontrol = NULL, type = "UK")
 }
 \arguments{
 \item{x}{a vector representing the input for which one wishes to calculate the criterion,}
 
 \item{model}{a list of objects of class \code{\link[DiceKriging]{km}} (one for each objective),}
 
-\item{paretoFront}{(optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]},}
+\item{paretoFront}{(optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]}, or any reference set of observations,}
 
 \item{critcontrol}{list with two possible options.\cr
  
@@ -98,4 +97,3 @@ V. Picheny (2014), Multiobjective optimization using Gaussian process emulators 
 \seealso{
 \code{\link[GPareto]{crit_EHI}}, \code{\link[GPareto]{crit_SMS}},  \code{\link[GPareto]{crit_EMI}}.
 }
-

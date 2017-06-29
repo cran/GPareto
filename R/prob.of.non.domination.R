@@ -1,7 +1,7 @@
 ## ' Computes exactlty the probability of non-domination for a set of points.
-## ' 
 ## ' @title Exact probability of non-domination for a set of points
-## ' @param paretoFront (optional) matrix corresponding to the Pareto Front (one output per column). 
+## ' @param paretoFront (optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]}, or any reference set of observations. 
+## ' In the case of noisy observations, if paretoFront is not provided, the GP mean at observed locations is taken as reference.
 ## ' @param model list of objects of class \code{\link[DiceKriging]{km}}, one for each objective functions,
 ## ' @param integration.points Points to compute the probability
 ## ' @param predictions An optional list of predictions (using \code{\link[DiceKriging]{predict.km}}) at 
@@ -71,8 +71,13 @@ prob.of.non.domination <- function(paretoFront=NULL, model=NULL, integration.poi
   
   # Compute current Pareto front if missing
   if (is.null(paretoFront)){
-    observations <- c()
-    for (i in 1:n.obj) observations <- cbind(observations, model[[i]]@y)
+    if (length(model[[1]]@noise.var)>0) {
+      # If noise.var exists: get "denoised" observations
+      pred <- lapply(model, FUN=predict, newdata = model[[1]]@X, checkNames = FALSE, type = "UK", light.return = TRUE)
+      observations <- Reduce(cbind, lapply(pred, function(alist) alist$mean))
+    } else {
+      observations <- Reduce(cbind, lapply(model, slot, "y"))
+    }
     paretoFront <- matrix(t(nondominated_points(t(observations))),ncol=n.obj)
   }
   n.pareto <- nrow(paretoFront)
@@ -80,7 +85,7 @@ prob.of.non.domination <- function(paretoFront=NULL, model=NULL, integration.poi
   # Generate kriging predictions if missing
   if ( is.null(predictions) ){
     predictions <- vector("list",n.obj)
-    for (i in 1:n.obj) predictions[[i]] <- predict(object=model[[i]], newdata=integration.points, type="UK", checkNames=FALSE)
+    for (i in 1:n.obj) predictions[[i]] <- predict(object=model[[i]], newdata=integration.points, type="UK", checkNames=FALSE, cov.compute = FALSE, light.return = TRUE)
   }
   
   # Precompute important quantities

@@ -28,55 +28,20 @@ EEV.2D.computation <- function(phi.x.bar, phi.x.tilde, phi.eta.x, phi.y.bar, phi
   n.pareto <- length(phi.x.bar)
   n.integration.points <- ncol(phi.x.tilde)
   
-  #*** Current excursion volume **********************************************
-  oldcrit <- crit <- 0
-  pij <- pijold  <- matrix(0, n.pareto+1, n.integration.points)
-  
+  pijold  <- diff  <- matrix(0, n.pareto+1, n.integration.points)
   pijold[1,] <- phi.x.tilde[1,]
+  diff[1,] <- (phi2.x.x[1,] - phi2.x.eta[1,])*(1 - phi.eta.y)
+  
   if (n.pareto > 1){
-    for (j in 2:(n.pareto)){
-      pijold[j,] <- (phi.x.tilde[j,] - phi.x.tilde[j-1,])*phi.y.tilde[j-1,]
-    }
+    pijold[2:(n.pareto),] <- (phi.x.tilde[2:(n.pareto),] - phi.x.tilde[1:(n.pareto-1),])*phi.y.tilde[1:(n.pareto-1),]
+    diff[2:(n.pareto),]   <- (phi2.x.x[2:(n.pareto),] - phi2.x.x[1:(n.pareto-1),] + phi2.x.eta[1:(n.pareto-1),] - phi2.x.eta[2:(n.pareto),] )*
+      (phi2.y.y[1:(n.pareto-1),] - phi2.y.eta[1:(n.pareto-1),]) 
   }
   pijold[n.pareto+1,] <- (1 - phi.x.tilde[n.pareto,])*phi.y.tilde[n.pareto,]
+  diff[n.pareto+1,]   <- (1 - phi.eta.x + phi2.x.eta[n.pareto,] - phi2.x.x[n.pareto,])*(phi2.y.y[n.pareto,] - phi2.y.eta[n.pareto,] )
   
-  #*** New excursion volume **************************************************
-  # j = 1
-  phipp.obj1   <- phi2.x.x[1,]
-  phipnu.obj1  <- phi2.x.eta[1,]
-  phi.ftilde.p <- phi.x.tilde[1,]
+  pij <- pijold - diff
   
-  pij[1,] <- ((phipp.obj1 - phipnu.obj1)*(phi.eta.y - 1) + phi.ftilde.p)
-  
-  # j = 2 ... n.pareto
-  if (n.pareto > 1){
-    for (j in 2:(n.pareto)){
-      phimm.obj1  <- phipp.obj1
-      phimnu.obj1 <- phipnu.obj1
-      phi.ftilde <- phi.ftilde.p
-      
-      phipp.obj1  <- phi2.x.x[j,]     
-      phipnu.obj1 <- phi2.x.eta[j,]
-      phipp.obj2  <- phi2.y.y[j-1,] 
-      phipnu.obj2 <- phi2.y.eta[j-1,]
-      
-      phi.gtilde   <- phi.y.tilde[j-1,]
-      phi.ftilde.p <- phi.x.tilde[j,]
-      
-      pij[j,] <-  ((phipp.obj1 - phipnu.obj1 + phimnu.obj1 - phimm.obj1)*(phipnu.obj2 - phipp.obj2) + (phi.ftilde.p - phi.ftilde)*phi.gtilde )
-    }
-  }
-  # j = n.pareto+1
-  j = n.pareto
-  phimnu.obj1  <- phipnu.obj1
-  phimm.obj1   <- phipp.obj1
-  phipp.obj2  <- phi2.y.y[j,]
-  phipnu.obj2 <-  phi2.y.eta[j,]
-  phi.ftilde <- phi.ftilde.p
-  phi.gtilde <- phi.y.tilde[j,]
-  
-  pij[j+1,] <- ((1 - phi.eta.x + phimnu.obj1 - phimm.obj1)*(phipnu.obj2 - phipp.obj2) + (1 - phi.ftilde)*phi.gtilde )
-  
-  crit <- sum(pijold - pij)
+  crit <- sum(diff)
   return(list(crit, pijold, pij))
 }

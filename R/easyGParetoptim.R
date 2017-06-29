@@ -9,25 +9,36 @@
 ##' \itemize{
 ##' \item \code{method}{: choice of multiobjective improvement function: "\code{SMS}", "\code{EHI}", "\code{EMI}" or "\code{SUR}" 
 ##' (see \code{\link[GPareto]{crit_SMS}}, \code{\link[GPareto]{crit_EHI}}, \code{\link[GPareto]{crit_EMI}}, \code{\link[GPareto]{crit_SUR}}),}
-##' \item \code{trace}{:  if positive, tracing information on the progress of the optimization is produced,}
+##' \item \code{trace}{: if positive, tracing information on the progress of the optimization is produced (\code{1} (default) for general progress,
+##'  \code{>1} for more details, e.g., warnings from \code{\link[rgenoud]{genoud}}),}
 ##' \item \code{inneroptim}{: choice of the inner optimization algorithm: "\code{genoud}", "\code{pso}" or "\code{random}"
 ##'  (see \code{\link[rgenoud]{genoud}} and \code{\link[pso]{psoptim}}),}
 ##' \item \code{maxit}{: maximum number of iterations of the inner loop,}
 ##' \item \code{seed}{: to fix the random variable generator,}
-##' \item \code{refPoint}{: reference point for hypervolume computations (for "\code{SMS}" and "\code{EHI}" methods).}
+##' \item \code{refPoint}{: reference point for hypervolume computations (for "\code{SMS}" and "\code{EHI}" methods),}
+##' \item \code{extendper}{: if no reference point \code{refPoint} is provided,
+##'  for each objective it is fixed to the maximum over the Pareto front plus extendper times the range. 
+##'  Default value to \code{0.2}, corresponding to \code{1.1} for a scaled objective with a Pareto front in \code{[0,1]^n.obj}.}
 ##' }
+##' 
+##' If \code{noise.var="given_by_fn"}, \code{fn} must return a list of two vectors, the first being the objective functions and the second 
+##' the corresponding noise variances. See examples in \code{\link[GPareto]{GParetoptim}}.
+##' 
 ##' For additional details or other possible arguments, see \code{\link[GPareto]{GParetoptim}}.\cr
 ##' 
 ##' Display of results and various post-processings are available with \code{\link[GPareto]{plotGPareto}}.  
 ##' 
-##' @param fn the multi-objective function to be minimized (vectorial output), found by a call to \code{\link[base]{match.fun}},
+##' @param fn the multi-objective function to be minimized (vectorial output), found by a call to \code{\link[base]{match.fun}}, see details,
 ##' @param cheapfn optional additional fast-to-evaluate objective function (handled next with class \code{\link[GPareto]{fastfun}}), 
 ##' which does not need a kriging model, handled by a call to \code{\link[base]{match.fun}},
 ##' @param budget total number of calls to the objective function,
 ##' @param lower vector of lower bounds for the variables to be optimized over,
 ##' @param upper vector of upper bounds for the variables to be optimized over,
+##' @param noise.var optional noise variance, for noisy objectives \code{fn}. If not NULL, either a scalar (constant noise, identical for all objectives), 
+##' a vector (constant noise, different for each objective) or a function (type closure) with vectorial output (variable noise, different for each objective). 
+##' Alternatively, set \code{noise.var="given_by_fn"}, see details. 
 ##' @param par initial design of experiments. If not provided, \code{par} is taken as a maximin LHD with budget/3 points,
-##' @param value initial set of objective observations \eqn{f(par)}. Computed if not provided.
+##' @param value initial set of objective observations \eqn{fn(par)}. Computed if not provided.
 ##' Not that \code{value} may NOT contain any \code{cheapfn} value,
 ##' @param control an optional list of control parameters. See "Details",
 ##' @param ... additional parameters to be given to the objective \code{fn}.
@@ -40,6 +51,8 @@
 ##' \item{\code{history}}{: a list containing all the points visited by the algorithm (\code{X}) and their corresponding objectives (\code{y}),}
 ##' \item{\code{model}}{: a list of objects of class \code{\link[DiceKriging]{km}}, corresponding to the last kriging models fitted.}
 ##' }
+##' Note that in the case of noisy problems, \code{value} and \code{history$y.denoised} are denoised values. The original observations are available in the slot
+##' \code{history$y}.
 ##' 
 ##' 
 ##' @author
@@ -60,7 +73,7 @@
 ##' 
 ##' @examples
 ##' #---------------------------------------------------------------------------
-##' # 2D objective function, 3 cases
+##' # 2D objective function, 4 cases
 ##' #---------------------------------------------------------------------------
 ##' \dontrun{
 ##' set.seed(25468)
@@ -109,9 +122,36 @@
 ##' title("Pareto Front")
 ##' plot(res$history$X, main="Pareto set", col = "red", pch = 20)
 ##' points(res$par, col="blue", pch = 17)
+##' 
+##' #---------------------------------------------------------------------------
+##' # 4- Expected Hypervolume Improvement optimization, using pso, noisy fn
+##' #---------------------------------------------------------------------------
+##' noise.var <- c(0.1, 0.2)
+##' funnoise <- function(x) {ZDT3(x) + sqrt(noise.var)*rnorm(n=2)}
+##' res <- easyGParetoptim(fn=funnoise, lower=lower, upper=upper, budget=30, noise.var=noise.var,
+##'                        control=list(method="EHI", inneroptim="pso", maxit=20))
+##' par(mfrow=c(1,2))
+##' plotGPareto(res)
+##' title("Pareto Front")
+##' plot(res$history$X, main="Pareto set", col = "red", pch = 20)
+##' points(res$par, col="blue", pch = 17)
+##' 
+##' #---------------------------------------------------------------------------
+##' # 5- Stepwise Uncertainty Reduction optimization, functional noise
+##' #---------------------------------------------------------------------------
+##' funnoise <- function(x) {ZDT3(x) + sqrt(abs(0.1*x))*rnorm(n=2)}
+##' noise.var <- function(x) return(abs(0.1*x))
+##' 
+##' res <- easyGParetoptim(fn=funnoise, lower=lower, upper=upper, budget=30, noise.var=noise.var,
+##'                      control=list(method="SUR", inneroptim="pso", maxit=20))
+##' par(mfrow=c(1,2))
+##' plotGPareto(res)
+##' title("Pareto Front")
+##' plot(res$history$X, main="Pareto set", col = "red", pch = 20)
+##' points(res$par, col="blue", pch = 17)
 ##' }
 
-easyGParetoptim <- function (fn, cheapfn = NULL, budget, lower, upper, par=NULL, value=NULL,  
+easyGParetoptim <- function (fn, cheapfn = NULL, budget, lower, upper, par=NULL, value=NULL, noise.var=NULL,
                              control=list(method="SMS", trace=1, inneroptim="pso", maxit=100, seed=42), ...) {
   
   if (is.null(control$method)) control$method <- "SMS"
@@ -121,13 +161,14 @@ easyGParetoptim <- function (fn, cheapfn = NULL, budget, lower, upper, par=NULL,
   if (is.null(control$seed)) control$seed   <- 42
   if (is.null(control$refPoint)) control$refPoint   <- NULL
   if (is.null(control$distance)) control$distance <- "euclidean"
+  if (is.null(control$threshold)) control$threshold <- 1e-5
   
   fn <- match.fun(fn)
   d <- length(lower)
   
   if (length(lower) != length(upper)) {
     cat("Bound values lower and upper are not consistent. Both should be vectors of size d.")
-    return(0)
+    return(NULL)
   }
   
   if (!is.null(par)) {
@@ -138,7 +179,7 @@ easyGParetoptim <- function (fn, cheapfn = NULL, budget, lower, upper, par=NULL,
       cat("Bound values (lower and upper) and initial DOE (par) are not consistent. \n 
           lower and upper should be vectors of size d and \n 
           par either a matrix with d columns or a data frame of d variables.")
-      return(0)
+      return(NULL)
     }
     n.init <- temp[1]
   } else {
@@ -150,13 +191,36 @@ easyGParetoptim <- function (fn, cheapfn = NULL, budget, lower, upper, par=NULL,
     obs.init <- as.matrix(value)
     if (nrow(obs.init) != n.init) {
       cat("Initial DOE (par) and objective (value) are not consistent.")
-      return(0)
+      return(NULL)
     }
   } else {
-    obs.init <- as.matrix(apply(design.init, 1, fn, ...))
-    if (nrow(obs.init)==1) obs.init <- t(obs.init)
-    if (nrow(obs.init)!=n.init) obs.init <- t(obs.init)
+    obs.init <- apply(design.init, 1, fn, ...)
   }
+  
+  if (is.null(noise.var)) {
+    obs.init <- as.matrix(obs.init)
+    design.noise.var <- NULL
+  } else if (typeof(noise.var) == "double") {
+    obs.init <- as.matrix(obs.init)
+    design.noise.var <- matrix(rep(noise.var, n.init), byrow=TRUE, nrow=n.init)
+  } else if (typeof(noise.var) == "closure") {
+    obs.init <- as.matrix(obs.init)
+    design.noise.var <- t(apply(design.init, 1, noise.var, ...))
+  } else if (noise.var =="given_by_fn") {
+    obs.init2 <- c()
+    for (i in 1:length(obs.init)) {
+      obs.init2 <- rbind(obs.init2, obs.init[[i]][[1]])
+      design.noise.var <- rbind(obs.init, obs.init[[i]][[2]])
+    }
+    obs.init <- obs.init2
+  } else {
+    cat("noise.var is misspecified")
+    return(NULL)
+  }
+  if (nrow(obs.init)==1) obs.init <- t(obs.init)
+  if (nrow(obs.init)!=n.init) obs.init <- t(obs.init)
+  if (!is.null(design.noise.var)) if (nrow(design.noise.var)!=n.init) design.noise.var <- t(design.noise.var)
+  
   n.obj <- ncol(obs.init)
   #----------------------------------------
   if (!is.null(par) && !is.null(value)) {
@@ -167,11 +231,12 @@ easyGParetoptim <- function (fn, cheapfn = NULL, budget, lower, upper, par=NULL,
   #----------------------------------------
   model <- vector("list", n.obj)
   for (j in 1:(n.obj)) {
-    model[[j]] <- km(~., design = design.init, response = obs.init[,j], control=list(trace=FALSE), lower=rep(.1,d), upper=rep(1,d))
+    model[[j]] <- km(~., design = design.init, response = obs.init[,j], control=list(trace=FALSE), 
+                     lower=rep(.1,d), upper=rep(1,d), noise.var=design.noise.var[,j])
   }
   #----------------------------------------
   critcontrol <- NULL
-
+  
   if (control$inneroptim=="genoud") optimcontrol <- list(method="genoud", max.generations=control$maxit, notrace = !control$trace>0)
   if (control$inneroptim=="pso")    optimcontrol <- list(method="pso", maxit=control$maxit, notrace = !control$trace>0)
   if (control$inneroptim=="random") {
@@ -188,10 +253,16 @@ easyGParetoptim <- function (fn, cheapfn = NULL, budget, lower, upper, par=NULL,
   
   if(!is.null(control$distance)) critcontrol$distance <- control$distance
   if(!is.null(control$threshold)) critcontrol$threshold <- control$threshold
-
-  omEGO <- GParetoptim(model = model, fn = fn, cheapfn = cheapfn,
-                       crit = control$method, nsteps=n.ite, lower=lower, upper=upper, cov.reestim=TRUE, 
-                       optimcontrol=optimcontrol, critcontrol = critcontrol, ...)
+  
+  if (is.null(noise.var)) {
+    omEGO <- GParetoptim(model = model, fn = fn, cheapfn = cheapfn,
+                         crit = control$method, nsteps=n.ite, lower=lower, upper=upper, cov.reestim=TRUE, 
+                         optimcontrol=optimcontrol, critcontrol = critcontrol, ...)
+  } else {
+    omEGO <- GParetoptim(model = model, fn = fn, cheapfn = cheapfn, noise.var=noise.var, reinterpolation = TRUE, 
+                         crit = control$method, nsteps=n.ite, lower=lower, upper=upper, cov.reestim=TRUE, 
+                         optimcontrol=optimcontrol, critcontrol = critcontrol, ...)
+  }
   
   allX <- omEGO$lastmodel[[1]]@X
   
@@ -200,10 +271,17 @@ easyGParetoptim <- function (fn, cheapfn = NULL, budget, lower, upper, par=NULL,
   for (i in 1:length(omEGO$lastmodel)) ally <- cbind(ally,
                                                      omEGO$lastmodel[[i]]@y[1:(omEGO$lastmodel[[1]]@n-1)])
   ally <- rbind(ally, omEGO$values[nrow(omEGO$values),])
-
-  # Compute current best
-  value <- t(nondominated_points(t(ally)))
-  par   <- allX[!is_dominated(t(ally)),]
   
-  return(list(par=par, value = value, history=list(X=allX, y=ally, model=omEGO$lastmodel)))
+  if (is.null(noise.var)) {
+    # Compute current best
+    value <- t(nondominated_points(t(ally)))
+    par   <- allX[!is_dominated(t(ally)),]
+    return(list(par=par, value = value, history=list(X=allX, y=ally), model=omEGO$lastmodel))
+  } else {
+    # Compute current denoised best
+    observations.denoised <- omEGO$observations.denoised
+    value <- t(nondominated_points(t(observations.denoised)))
+    par   <- allX[!is_dominated(t(observations.denoised)),]
+    return(list(par=par, value = value, history=list(X=allX, y=ally, y.denoised=observations.denoised), model=omEGO$lastmodel))
+  }
   }

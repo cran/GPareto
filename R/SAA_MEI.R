@@ -53,16 +53,19 @@
 ## ' }
 
 SAA_mEI <- function(x, model,
-                    critcontrol = list(nb.samp, seed = 42, type = "maximin", refPoint = NULL),
+                    critcontrol = list(nb.samp=100, seed = 42, type = "maximin", refPoint = NULL),
                     type = "UK", paretoFront = NULL){
+  
+  if (is.null(critcontrol$type)) critcontrol$seed <- 42
+  if (is.null(critcontrol$type)) critcontrol$type <-"maximin"
+  if (is.null(critcontrol$nb.samp)) critcontrol$nb.samp <- 100
   
   n.obj <- length(model)
   d <- model[[1]]@d
   x.new <- matrix(x, 1, d)
-
+  
   if(is.null(paretoFront)){
-    observations <- matrix(0, model[[1]]@n, n.obj)
-    for (i in 1:n.obj) observations[,i] <- model[[i]]@y
+    observations <- Reduce(cbind, lapply(model, slot, "y"))
     paretoFront <- t(nondominated_points(t(observations)))
   }
   
@@ -83,18 +86,24 @@ SAA_mEI <- function(x, model,
   if(critcontrol$type == "hypervolume"){
     Improvement <- Hypervolume_improvement
     if (is.null(refPoint)){
-      refPoint <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj) ### May be changed? 
+      if(is.null(critcontrol$extendper)) critcontrol$extendper <- 0.1
+      # refPoint    <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj)
+      PF_range <- apply(paretoFront, 2, range)
+      refPoint <- matrix(PF_range[2,] + (PF_range[2,] - PF_range[1,]) * critcontrol$extendper , 1, n.obj)
       cat("No refPoint provided, ", signif(refPoint, 3), "used \n")
-    } 
+    }
   }
   
-  mu    <- rep(NaN, n.obj)
-  sigma <- rep(NaN, n.obj)
-  for (i in 1:n.obj){    
-    pred     <- predict(object=model[[i]], newdata=x.new, type=type, checkNames = FALSE, light.return = TRUE)
-    mu[i]    <- pred$mean
-    sigma[i] <- pred$sd
-  }
+  # mu    <- rep(NaN, n.obj)
+  # sigma <- rep(NaN, n.obj)
+  # for (i in 1:n.obj){    
+  #   pred     <- predict(object=model[[i]], newdata=x.new, type=type, checkNames = FALSE, light.return = TRUE, cov.compute = FALSE)
+  #   mu[i]    <- pred$mean
+  #   sigma[i] <- pred$sd
+  # }
+  pred <- predict_kms(model, newdata=x.new, type=type, checkNames = FALSE, light.return = TRUE, cov.compute = FALSE)
+  mu <- as.numeric(pred$mean)
+  sigma <- as.numeric(pred$sd)
   
   ## A new x too close to the known observations could result in numerical problems
   if(checkPredict(x, model, type = type, distance = critcontrol$distance, threshold = critcontrol$threshold)){
@@ -138,10 +147,9 @@ Maximin_Improvement <- function(point, front, refPoint){
   if(!is_dominated(t(rbind(point,front)))[1]){
     Em <- -Inf
     for(i in 1:nrow(front)){
-      tmp <- Inf
-      for(j in 1:ncol(front)){
-        tmp <- min(tmp, point[j] - front[i,j])
-      }
+      # for(j in 1:ncol(front)){
+      tmp <- min(Inf, point - front[i,])
+      # }
       Em <- max(Em, tmp)
     }
   }

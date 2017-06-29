@@ -3,7 +3,7 @@
 ##' @title Analytical expression of the SUR criterion for two or three objectives.
 ##' @param x a vector representing the input for which one wishes to calculate the criterion,
 ##' @param model a list of objects of class \code{\link[DiceKriging]{km}} (one for each objective),
-##' @param paretoFront (optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]}, 
+##' @param paretoFront (optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]}, or any reference set of observations,  
 ##' @param critcontrol list with two possible options.\cr
 ##'  
 ##' A) One can use the four following arguments:
@@ -80,36 +80,51 @@
 ##'               )         
 ##' @export
 
-crit_SUR <- function(x, model, paretoFront = NULL,
-                     critcontrol = list(SURcontrol = NULL), type = "UK"){
+crit_SUR <- function(x, model, paretoFront = NULL, critcontrol = NULL, type = "UK"){
   X.new <- matrix(x, nrow=1, ncol=model[[1]]@d)
+  
   if(checkPredict(x, model, type = type, distance = critcontrol$distance, threshold = critcontrol$threshold)){
     crit <- -1
   } else {
     
-
     n.obj <- length(model)
     
     ## Use of SURcontrol for integration_design_optim or directly with integration.points/weights and
     ## mn.X, sn.X
-    if(is.null(critcontrol$integration.points)){
+    if (is.null(critcontrol$integration.points)) {
       d <- model[[1]]@d
-      integration.param   <- integration_design_optim(critcontrol$SURcontrol, d,
+      integration.param   <- integration_design_optim(critcontrol, d,
                                                       critcontrol$lower, critcontrol$upper, model = model)
       integration.points  <- as.matrix(integration.param$integration.points)
       integration.weights <- integration.param$integration.weights
+    }
+    if (is.null(critcontrol$mn.X) || is.null(critcontrol$sn.X) || is.null(critcontrol$precalc.data)) {
       
       precalc.data <- vector("list", n.obj)
       mn.X <- sn.X <- matrix(0, n.obj, nrow(integration.points))
       
-      for (i in 1:n.obj){
-        p.tst <- predict(model[[i]], newdata=integration.points, type=type, checkNames=FALSE)
-        mn.X[i,] <- p.tst$mean
-        sn.X[i,]   <- p.tst$sd
-        if (max(sn.X[i,]) != 0) precalc.data[[i]] <- precomputeUpdateData(model[[i]], integration.points)
-      }
+      # for (i in 1:n.obj){
+      #   p.tst <- predict(model[[i]], newdata=integration.points, type=type, checkNames=FALSE)
+      #   mn.X[i,] <- p.tst$mean
+      #   sn.X[i,]   <- p.tst$sd
+      #   if (max(sn.X[i,]) != 0) precalc.data[[i]] <- precomputeUpdateData(model[[i]], integration.points)
+      # }
       
-    }else{
+      # p.tst <- lapply(model, FUN=predict, newdata=integration.points, checkNames=FALSE, type=type, cov.compute = FALSE, light.return = TRUE)
+      # mn.X <- t(Reduce(cbind, lapply(p.tst, function(alist) alist$mean)))
+      # sn.X <- t(Reduce(cbind, lapply(p.tst, function(alist) alist$sd)))
+      
+      p.tst <- predict_kms(model, newdata=integration.points, checkNames=FALSE, type=type, cov.compute = FALSE, light.return = TRUE)
+      mn.X <- p.tst$mean
+      sn.X <- p.tst$sd
+      
+      wrapped_precomputeUpdateData <- function(model, integration.points){
+        if(class(model) != "km") return(NULL)
+        else return(precomputeUpdateData(model, integration.points))
+      }
+      precalc.data <- lapply(model, FUN=wrapped_precomputeUpdateData, integration.points=integration.points)
+      
+    } else {
       integration.points  <- critcontrol$integration.points
       integration.weights <- critcontrol$integration.weights
       mn.X <- critcontrol$mn.X 
@@ -121,8 +136,7 @@ crit_SUR <- function(x, model, paretoFront = NULL,
     if (is.null(integration.weights)) {integration.weights <- rep(1/n.integration.points, n.integration.points)}
     
     if(is.null(paretoFront)){
-      observations <- c()    
-      for (i in 1:n.obj) observations <- cbind(observations, model[[i]]@y)
+      observations <- Reduce(cbind, lapply(model, slot, "y"))
       paretoFront <- t(nondominated_points(t(observations)))
     }
     
@@ -134,10 +148,8 @@ crit_SUR <- function(x, model, paretoFront = NULL,
       sn.X  <- sn.X[,-I, drop=FALSE]
       
       for (i in 1:n.obj){
-#         if(class(model[[i]]) == "km"){
-          precalc.data[[i]]$Kinv.c.olddata <- precalc.data[[i]]$Kinv.c.olddata[,-I,drop=FALSE]
-          precalc.data[[i]]$first.member   <- precalc.data[[i]]$first.member[-I]
-#         }
+        precalc.data[[i]]$Kinv.c.olddata <- precalc.data[[i]]$Kinv.c.olddata[,-I,drop=FALSE]
+        precalc.data[[i]]$first.member   <- precalc.data[[i]]$first.member[-I]
       }
       
       if (length(integration.weights) > 1){integration.weights <- integration.weights[-I]}
@@ -184,9 +196,8 @@ crit_SUR <- function(x, model, paretoFront = NULL,
       
       ##-------- Precalculations for x --------##
       objx.bar <- (paretoFront[,1]-mn.xnew[1]) / sn.xnew[1]
-      
-      objx.tilde <- (matrix(rep(paretoFront[,1],n.integration.points), ncol = n.integration.points) - t(matrix(rep(mn.X[1,], n.pareto), ncol=n.pareto)) ) / 
-        t(matrix(rep(sn.X[1,], n.pareto), ncol=n.pareto))
+      objx.tilde <- (matrix(rep(paretoFront[,1],n.integration.points), ncol = n.integration.points) - 
+                       t(matrix(rep(mn.X[1,], n.pareto), ncol=n.pareto)) ) / t(matrix(rep(sn.X[1,], n.pareto), ncol=n.pareto))
       
       phi.x.bar   <- pnorm(objx.bar)
       phi.x.tilde <- pnorm(objx.tilde)
@@ -225,6 +236,7 @@ crit_SUR <- function(x, model, paretoFront = NULL,
         }
       }
       
+      ##-------- Precalculations for z --------##
       if (n.obj ==3) {
         if (sn.xnew[3] != 0) {
           objz.bar <- (paretoFront[,3]-mn.xnew[3]) / sn.xnew[3]
@@ -282,9 +294,11 @@ crit_SUR <- function(x, model, paretoFront = NULL,
         #*** START new excursion volume ********************************************
         for (i in 1:(n.pareto)){
           
+          # res <- allres[[i]]
+          # Subset of the Pareto front
           nondominated.sub <- which(!is_dominated((nondominated_points(t(paretoFront[(i:n.pareto),1:2, drop=FALSE])))))
-          #         nondominated.sub <- paretocheck(paretoFront[(i:n.pareto),1:2, drop=FALSE])                         # Subset of the Pareto front
-          nondominated.sub <- i-1+nondominated.sub[sort(paretoFront[(i:n.pareto)[nondominated.sub],1],index.return=TRUE)[[2]]] # Reorder by increasing first objective
+          # Reorder by increasing first objective
+          nondominated.sub <- i-1+nondominated.sub[sort(paretoFront[(i:n.pareto)[nondominated.sub],1],index.return=TRUE)[[2]]]
           n.pareto.sub     <- length(nondominated.sub)
           
           res <- EEV.2D.computation(phi.x.bar[nondominated.sub], phi.x.tilde[nondominated.sub,,drop=FALSE], phi.eta.x, 
@@ -294,7 +308,6 @@ crit_SUR <- function(x, model, paretoFront = NULL,
           
           pijold <- colSums(res[[2]])
           pijnew <- colSums(res[[3]])
-          
           if (i==1) {
             p.joint.1 <- 1 - phi2.z.z[i,] - phi.eta.z + phi2.z.eta[i,]
             p.joint.2 <- phi2.z.z[i,] - phi.z.tilde[i,] + phi.eta.z - phi2.z.eta[i,]
@@ -320,7 +333,7 @@ crit_SUR <- function(x, model, paretoFront = NULL,
       }
     }
     if (crit<1e-32) crit <- prob.of.non.domination(paretoFront=paretoFront, model, X.new, predictions=pred.xnew)-1
-
+    
     return(crit)
   }
   

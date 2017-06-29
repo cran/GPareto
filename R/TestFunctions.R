@@ -108,7 +108,7 @@ ZDT3 <-
     }
     n <- ncol(x)
     g <- 1+rowSums(x[,2:n, drop = FALSE])*9/(n-1)
- 
+    
     return(cbind(x[,1], g*(1 - sqrt(x[,1]/g) - x[,1]/g*sin(10*pi*x[,1]))))
   }
 
@@ -149,7 +149,7 @@ P1 <-
     b2<-15*x[,2]
     return(cbind((b2-5.1*(b1/(2*pi))^2+5/pi*b1-6)^2 +10*((1-1/(8*pi))*cos(b1)+1),
                  -sqrt((10.5-b1)*(b1+5.5)*(b2+0.5)) - 1/30*(b2 -5.1*(b1/(2*pi))^2-6)^2 - 1/3*((1-1/(8*pi))*cos(b1)+1)
-                 ) 
+    ) 
     )
   }
 
@@ -182,8 +182,8 @@ GSP <- function(x, gamma=1)
   
   if (is.null(N))
   { N <- 1
-    n <- length(x)
-    x <- matrix(x, nrow=1,ncol=n)
+  n <- length(x)
+  x <- matrix(x, nrow=1,ncol=n)
   }
   
   obj <- matrix(rep(0, 2*N), nrow=N, ncol=2)
@@ -205,7 +205,7 @@ MOP2 <- function(x)
     n <- length(xmod)
     y1 <- 1 - exp(-sum((xmod - 1/sqrt(n))^2) )
     y2 <- 1 - exp(-sum((xmod + 1/sqrt(n))^2) )
-    Y <- matrix(c(y1,y2),2,1)
+    Y <- matrix(c(y1,y2),1,2)
   } else
   {
     n <- ncol(xmod)
@@ -243,7 +243,7 @@ DTLZ1 <- function(x, nobj = 3){
   z <- matrix(x[,nobj:n], nrow(x))
   
   g <- 100 * (n - nobj + 1 + rowSums((z-0.5)^2 - cos(20 * pi *(z - 0.5))))
-
+  
   tmp <- t(apply(y, 1, cumprod))
   tmp <- cbind(t(apply(tmp, 1, rev)) ,1)
   
@@ -297,7 +297,7 @@ DTLZ3 <- function(x, nobj = 3){
   tmp2 <- cbind(1, t(apply(sin(y * pi/2), 1, rev)))
   
   f <- tmp * tmp2 * (1 + g)
-                     
+  
 }
 
 ##' @rdname TestFunctions
@@ -316,8 +316,8 @@ DTLZ7 <- function(x, nobj = 3){
   tmp <- cbind(y, 1)
   
   tmp2 <- cbind(matrix(1,nrow(x),nobj - 1), (1 + g) * (nobj -  rowSums(y/(1+g) * (1 + sin(3 * pi * y)))))
-
-#   tmp2 <- c(rep(1,(nobj - 1)), (1 + g) * (nobj -  sum(y/(1+g) * (1 + sin(3 * pi * y)))))
+  
+  #   tmp2 <- c(rep(1,(nobj - 1)), (1 + g) * (nobj -  sum(y/(1+g) * (1 + sin(3 * pi * y)))))
   
   f <- tmp * tmp2
   

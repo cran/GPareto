@@ -6,7 +6,7 @@
 \usage{
 crit_optimizer(crit = "SMS", model, lower, upper, cheapfn = NULL,
   type = "UK", paretoFront = NULL, critcontrol = NULL,
-  optimcontrol = NULL, nsteps.remaining = 1)
+  optimcontrol = NULL)
 }
 \arguments{
 \item{crit}{sampling criterion. Four choices are available : "\code{SMS}", "\code{EHI}", "\code{EMI}" and "\code{SUR}",}
@@ -21,27 +21,31 @@ crit_optimizer(crit = "SMS", model, lower, upper, cheapfn = NULL,
 
 \item{type}{"\code{SK}" or "\code{UK}" (default), depending whether uncertainty related to trend estimation has to be taken into account.}
 
-\item{paretoFront}{(optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]},}
+\item{paretoFront}{(optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]}, or any reference set of observations,}
 
 \item{critcontrol}{optional list of control parameters for criterion \code{crit}, see details.
-Options for the \code{\link[GPareto]{checkPredict}} function: \code{threshold} (\code{1e-4}) and \code{distance} (\code{covdist}) are used to avoid numerical issues occuring when adding points too close to the existing ones.}
+Options for the \code{\link[GPareto]{checkPredict}} function: \code{threshold} (\code{1e-4}) and \code{distance} (\code{covdist}) are used to avoid numerical issues 
+occuring when adding points too close to the existing ones.}
 
 \item{optimcontrol}{optional list of control parameters for optimization of the selected infill criterion. 
       "\code{method}" set the optimization method; one can 
-       choose between "\code{discrete}", "\code{pso}" and "\code{genoud}" or a user defined method name (passed to \code{\link[base]{match.fun}}). For each method, further parameters can be set.\cr 
+       choose between "\code{discrete}", "\code{pso}" and "\code{genoud}" or a user defined method name (passed to \code{\link[base]{match.fun}}). 
+       For each method, further parameters can be set.\cr 
        For "\code{discrete}", one has to provide the argument "\code{candidate.points}". \cr
        For "\code{pso}", one can control the maximum number of iterations "\code{maxit}" (\code{400}) and the population size "\code{s}"
        (default :  \code{max(20, floor(10+2*sqrt(length(dim))))} (see \code{\link[pso]{psoptim}}). \cr
        For "\code{genoud}", one can control, among others, "\code{pop.size}" (default :  \code{[N = 3*2^dim} for \code{dim < 6} and  \code{N = 32*dim} otherwise]),
-"\code{max.generations}" (\code{12}), "\code{wait.generations}" (\code{2}), "\code{BFGSburnin}" (\code{2}), \code{BFGSmaxit} (\code{N}) and \code{solution.tolerance} (\code{1e-21})
+"\code{max.generations}" (\code{12}), "\code{wait.generations}" (\code{2}), "\code{BFGSburnin}" (\code{2}), \code{BFGSmaxit} (\code{N}) and 
+\code{solution.tolerance} (\code{1e-21})
  of function "\code{genoud}" (see \code{\link[rgenoud]{genoud}}). Numbers into brackets are the default values.\cr
- For a user defined method, it must have arguments like the default \code{\link[stats]{optim}} method, i.e. \code{par}, \code{fn}, \code{lower}, \code{upper}, \code{...} and eventually \code{control}, and return a list with \code{par} and \code{value}.}
-
-\item{nsteps.remaining}{Number of iterations remaining in the optimization loop. 
-Used by "\code{SMS}" to determine the parameter epsilon.}
+ For a user defined method, it must have arguments like the default \code{\link[stats]{optim}} method, i.e. \code{par}, \code{fn}, \code{lower}, \code{upper}, \code{...} 
+ and possibly \code{control}, 
+ and return a list with \code{par} and \code{value}.
+ A trace \code{trace} argument is available, it can be set to \code{0} to suppress all messages, to \code{1} (default) for displaying the optimization progresses,
+ and \code{>1} for the highest level of details.}
 }
 \value{
-A list with components:  
+A list with components: 
  \itemize{
  \item{\code{par}}{: The best set of parameters found,}
  \item{\code{value}}{: The value of expected improvement at \code{par}.}
@@ -68,7 +72,8 @@ Available infill criteria with \code{crit} are : \cr
 \item Expected Maximin Improvement (\code{EMI}) \code{\link[GPareto]{crit_EMI}},
 \item Stepwise Uncertainty Reduction of the excursion volume (\code{SUR}) \code{\link[GPareto]{crit_SUR}}
 }
-Depending on the selected criterion, parameters such as a reference point for \code{SMS} and \code{EHI} or arguments for \code{\link[GPareto]{integration_design_optim}} with \code{SUR} can be given with \code{critcontrol}.
+Depending on the selected criterion, parameters such as a reference point for \code{SMS} and \code{EHI} or arguments for 
+\code{\link[GPareto]{integration_design_optim}} with \code{SUR} can be given with \code{critcontrol}.
 Also options for \code{\link[GPareto]{checkPredict}} are available.
 More precisions are given in the corresponding help pages.
 }
@@ -250,8 +255,9 @@ filled.contour(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid),
 }
 }
 \references{
-W.R. Jr. Mebane and J.S. Sekhon (2011), Genetic optimization using derivatives: The rgenoud package for R, \emph{Journal of Statistical Software}, 42(11), 1-26 \cr
+W.R. Jr. Mebane and J.S. Sekhon (2011), Genetic optimization using derivatives: The rgenoud package for R, 
+\emph{Journal of Statistical Software}, 42(11), 1-26 \cr
 
-D.R. Jones, M. Schonlau, and W.J. Welch (1998), Efficient global optimization of expensive black-box functions, \emph{Journal of Global Optimization}, 13, 455-492.
+D.R. Jones, M. Schonlau, and W.J. Welch (1998), Efficient global optimization of expensive black-box functions, 
+\emph{Journal of Global Optimization}, 13, 455-492.
 }
-

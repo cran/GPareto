@@ -33,4 +33,3 @@ The distance can simply be the Euclidean distance or the canonical distance asso
   \deqn{d(x,y) = \sqrt{k(x,x) - 2k(x,y) + k(y,y)}.}{d(x,y) = \sqrt(k(x,x) - 2k(x,y) + k(y,y)).} 
   The last solution is the ratio between the prediction variance at \code{x} and the variance of the process.
 }
-

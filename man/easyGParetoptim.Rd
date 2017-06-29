@@ -5,11 +5,11 @@
 \title{EGO algorithm for multiobjective optimization}
 \usage{
 easyGParetoptim(fn, cheapfn = NULL, budget, lower, upper, par = NULL,
-  value = NULL, control = list(method = "SMS", trace = 1, inneroptim =
-  "pso", maxit = 100, seed = 42), ...)
+  value = NULL, noise.var = NULL, control = list(method = "SMS", trace =
+  1, inneroptim = "pso", maxit = 100, seed = 42), ...)
 }
 \arguments{
-\item{fn}{the multi-objective function to be minimized (vectorial output), found by a call to \code{\link[base]{match.fun}},}
+\item{fn}{the multi-objective function to be minimized (vectorial output), found by a call to \code{\link[base]{match.fun}}, see details,}
 
 \item{cheapfn}{optional additional fast-to-evaluate objective function (handled next with class \code{\link[GPareto]{fastfun}}), 
 which does not need a kriging model, handled by a call to \code{\link[base]{match.fun}},}
@@ -22,8 +22,12 @@ which does not need a kriging model, handled by a call to \code{\link[base]{matc
 
 \item{par}{initial design of experiments. If not provided, \code{par} is taken as a maximin LHD with budget/3 points,}
 
-\item{value}{initial set of objective observations \eqn{f(par)}. Computed if not provided.
+\item{value}{initial set of objective observations \eqn{fn(par)}. Computed if not provided.
 Not that \code{value} may NOT contain any \code{cheapfn} value,}
+
+\item{noise.var}{optional noise variance, for noisy objectives \code{fn}. If not NULL, either a scalar (constant noise, identical for all objectives), 
+a vector (constant noise, different for each objective) or a function (type closure) with vectorial output (variable noise, different for each objective). 
+Alternatively, set \code{noise.var="given_by_fn"}, see details.}
 
 \item{control}{an optional list of control parameters. See "Details",}
 
@@ -37,6 +41,8 @@ A list with components:
 \item{\code{history}}{: a list containing all the points visited by the algorithm (\code{X}) and their corresponding objectives (\code{y}),}
 \item{\code{model}}{: a list of objects of class \code{\link[DiceKriging]{km}}, corresponding to the last kriging models fitted.}
 }
+Note that in the case of noisy problems, \code{value} and \code{history$y.denoised} are denoised values. The original observations are available in the slot
+\code{history$y}.
 }
 \description{
 User-friendly wrapper of the function \code{\link[GPareto]{GParetoptim}}.
@@ -51,20 +57,28 @@ The \code{control} argument is a list that can supply any of the following optio
 \itemize{
 \item \code{method}{: choice of multiobjective improvement function: "\code{SMS}", "\code{EHI}", "\code{EMI}" or "\code{SUR}" 
 (see \code{\link[GPareto]{crit_SMS}}, \code{\link[GPareto]{crit_EHI}}, \code{\link[GPareto]{crit_EMI}}, \code{\link[GPareto]{crit_SUR}}),}
-\item \code{trace}{:  if positive, tracing information on the progress of the optimization is produced,}
+\item \code{trace}{: if positive, tracing information on the progress of the optimization is produced (\code{1} (default) for general progress,
+ \code{>1} for more details, e.g., warnings from \code{\link[rgenoud]{genoud}}),}
 \item \code{inneroptim}{: choice of the inner optimization algorithm: "\code{genoud}", "\code{pso}" or "\code{random}"
  (see \code{\link[rgenoud]{genoud}} and \code{\link[pso]{psoptim}}),}
 \item \code{maxit}{: maximum number of iterations of the inner loop,}
 \item \code{seed}{: to fix the random variable generator,}
-\item \code{refPoint}{: reference point for hypervolume computations (for "\code{SMS}" and "\code{EHI}" methods).}
+\item \code{refPoint}{: reference point for hypervolume computations (for "\code{SMS}" and "\code{EHI}" methods),}
+\item \code{extendper}{: if no reference point \code{refPoint} is provided,
+ for each objective it is fixed to the maximum over the Pareto front plus extendper times the range. 
+ Default value to \code{0.2}, corresponding to \code{1.1} for a scaled objective with a Pareto front in \code{[0,1]^n.obj}.}
 }
+
+If \code{noise.var="given_by_fn"}, \code{fn} must return a list of two vectors, the first being the objective functions and the second 
+the corresponding noise variances. See examples in \code{\link[GPareto]{GParetoptim}}.
+
 For additional details or other possible arguments, see \code{\link[GPareto]{GParetoptim}}.\cr
 
 Display of results and various post-processings are available with \code{\link[GPareto]{plotGPareto}}.
 }
 \examples{
 #---------------------------------------------------------------------------
-# 2D objective function, 3 cases
+# 2D objective function, 4 cases
 #---------------------------------------------------------------------------
 \dontrun{
 set.seed(25468)
@@ -113,12 +127,34 @@ plotGPareto(res)
 title("Pareto Front")
 plot(res$history$X, main="Pareto set", col = "red", pch = 20)
 points(res$par, col="blue", pch = 17)
-}
-}
-\author{
-Victor Picheny (INRA, Castanet-Tolosan, France)
 
-Mickael Binois (Mines Saint-Etienne/Renault, France)
+#---------------------------------------------------------------------------
+# 4- Expected Hypervolume Improvement optimization, using pso, noisy fn
+#---------------------------------------------------------------------------
+noise.var <- c(0.1, 0.2)
+funnoise <- function(x) {ZDT3(x) + sqrt(noise.var)*rnorm(n=2)}
+res <- easyGParetoptim(fn=funnoise, lower=lower, upper=upper, budget=30, noise.var=noise.var,
+                       control=list(method="EHI", inneroptim="pso", maxit=20))
+par(mfrow=c(1,2))
+plotGPareto(res)
+title("Pareto Front")
+plot(res$history$X, main="Pareto set", col = "red", pch = 20)
+points(res$par, col="blue", pch = 17)
+
+#---------------------------------------------------------------------------
+# 5- Stepwise Uncertainty Reduction optimization, functional noise
+#---------------------------------------------------------------------------
+funnoise <- function(x) {ZDT3(x) + sqrt(abs(0.1*x))*rnorm(n=2)}
+noise.var <- function(x) return(abs(0.1*x))
+
+res <- easyGParetoptim(fn=funnoise, lower=lower, upper=upper, budget=30, noise.var=noise.var,
+                     control=list(method="SUR", inneroptim="pso", maxit=20))
+par(mfrow=c(1,2))
+plotGPareto(res)
+title("Pareto Front")
+plot(res$history$X, main="Pareto set", col = "red", pch = 20)
+points(res$par, col="blue", pch = 17)
+}
 }
 \references{
 M. T. Emmerich, A. H. Deutz, J. W. Klinkenberg (2011), Hypervolume-based expected improvement: Monotonicity properties and exact computation,
@@ -129,4 +165,8 @@ T. Wagner, M. Emmerich, A. Deutz, W. Ponweiser (2010), On expected-improvement c
 \emph{Parallel Problem Solving from Nature}, 718-727, Springer, Berlin. \cr \cr
 J. D. Svenson (2011), \emph{Computer Experiments: Multiobjective Optimization and Sensitivity Analysis}, Ohio State university, PhD thesis.
 }
+\author{
+Victor Picheny (INRA, Castanet-Tolosan, France)
 
+Mickael Binois (Mines Saint-Etienne/Renault, France)
+}

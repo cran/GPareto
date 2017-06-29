@@ -134,7 +134,7 @@ CPF <-
     ActivePoints[which(X[,1] <= min(fun1sims) | X[,2] <= min(fun2sims))] = 1
     
     ## for the points in X which are dominated by the Pareto Front of the observations, the probability is 1
-    for(i in 1:dim(paretoFront)[2]){
+    for(i in 1:dim(paretoFront)[1]){
       tmp <- which(X[,1] >= paretoFront[i,1] & X[,2] >= paretoFront[i,2])
       Pdom[tmp] = nsim
       ActivePoints[tmp] = 1
@@ -185,7 +185,7 @@ summary.CPF <- function(object,...){
 ##' @export
 plot.CPF <- function(x, ...){
   # #' @title Plot of the attainment function and Vorob'ev expectation.
-  # #' @details See \code{\link[DiceMOO]{CPF}} for an example.
+  # #' @details See \code{\link[GPareto]{CPF}} for an example.
   
   if(is.null(x$VE)){
     filled.contour(x$x, x$y, x$values,
@@ -193,11 +193,11 @@ plot.CPF <- function(x, ...){
                    main = "Empirical attainment function",
                    xlab = expression(f[1]), ylab = expression(f[2]),
                    plot.axes = { axis(1); axis(2);
-                                 #points(x$PF[1, ], x$PF[2, ], pch = 17, col = "blue");
-                                 points(x$response[,1], x$responses[,2], pch = 17, col="blue");
-                                 contour(x$x, x$y, x$values, add=T,
-                                         levels = c(0,0.2,0.4,0.6,0.8,1),labcex=1);
-                                 plotParetoEmp(x$PF,col="blue", lwd = 2);
+                     #points(x$PF[1, ], x$PF[2, ], pch = 17, col = "blue");
+                     points(x$response[,1], x$responses[,2], pch = 17, col="blue");
+                     contour(x$x, x$y, x$values, add=T,
+                             levels = c(0,0.2,0.4,0.6,0.8,1),labcex=1);
+                     plotParetoEmp(x$PF,col="blue", lwd = 2);
                    }
     )
   }else{
@@ -207,12 +207,12 @@ plot.CPF <- function(x, ...){
                                      list(a = formatC(x$beta_star, digits = 2))),
                    xlab = expression(f[1]), ylab = expression(f[2]),
                    plot.axes = { axis(1); axis(2);
-                                 #points(x$PF[1, ], x$PF[2, ], pch = 17, col = "blue");
-                                 points(x$response[,1], x$responses[,2], pch = 17, col="blue");
-                                 contour(x$x, x$y, x$values, add=T,
-                                         levels = c(0,0.2,0.4,0.6,0.8,1),labcex=1);
-                                 plotParetoEmp(x$PF,col="blue", lwd = 2);
-                                 plotParetoEmp(x$VE,col="cyan",lwd=2)
+                     #points(x$PF[1, ], x$PF[2, ], pch = 17, col = "blue");
+                     points(x$response[,1], x$responses[,2], pch = 17, col="blue");
+                     contour(x$x, x$y, x$values, add=T,
+                             levels = c(0,0.2,0.4,0.6,0.8,1),labcex=1);
+                     plotParetoEmp(x$PF,col="blue", lwd = 2);
+                     plotParetoEmp(x$VE,col="cyan",lwd=2)
                    }
     )
   }
@@ -253,7 +253,7 @@ coef.CPF <- function(object, type = c("grid", "attainment", "threshold",
                                       "expectation", "refPoint", "deviation"), ...){
   # #' Get coefficients values from a CPF object.
   # #' @title Get coefficients values
-  # #' @param object an object with class \code{\link[DiceMOO]{CPF}} from which the coefficiant will be extracted.
+  # #' @param object an object with class \code{\link[GPareto]{CPF}} from which the coefficiant will be extracted.
   # #' @param type Character string or vector specifying which type(s) of coefficients in the structure will be
   # #'  extracted. Should be one of \code{grid}, \code{attainment}, \code{threshold}, \code{expectation}, \code{refPoint}, \code{deviation}.
   # #' @param ... other arguments (undocumented at this stage). 

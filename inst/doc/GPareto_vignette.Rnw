@@ -15,8 +15,8 @@
 
 %% for pretty printing and a nice hypersummary also set:
 \Plainauthor{Micka\"el Binois, Victor Picheny} %% comma-separated
-\Plaintitle{\pkg{GPareto}: An R Package for Gaussian-Process Based Multi-Objective Optimization and Analysis} %% without formatting
-\Shorttitle{\pkg{GPareto}: An R Package for GP-Based Multi-Objective Optimization and Analysis} %% a short title (if necessary)
+\Plaintitle{GPareto: An R Package for Gaussian-Process Based Multi-Objective Optimization and Analysis} %% without formatting
+\Shorttitle{\pkg{GPareto}: An \proglang{R} Package for GP-Based Multi-Objective Optimization and Analysis} %% a short title (if necessary)
 
 %% an abstract and keywords
 \Abstract{
@@ -54,6 +54,7 @@ The \pkg{GPareto} package for \proglang{R} provides multi-objective optimization
 \newcommand{\Rset}{\mathbb{R}}								
 \newcommand{\Xset}{\mathbb{X}}
 \newcommand{\Px}{\mathbb{P}_{\Xset}}
+\newcommand{\PF}{\mathcal{P}_n}
 \newcommand{\x}{\mathbf{x}}
 \newcommand{\X}{\mathbf{X}}
 \newcommand{\y}{\mathbf{y}}
@@ -87,35 +88,37 @@ The \pkg{GPareto} package for \proglang{R} provides multi-objective optimization
 \usepackage{amsfonts}
 \usepackage{paralist}
 \usepackage{caption,subcaption}
+\usepackage{stmaryrd}
 
 <<setup, echo=FALSE, include=FALSE>>=
 library("knitr")
 # set global chunk options
 opts_chunk$set(prompt=TRUE)
-options(replace.assign=TRUE, width=90, prompt="R> ")
+options(prompt = "R> ", continue = "+  ", width = 76, useFancyQuotes = FALSE)
 opts_chunk$set(highlight=FALSE)
 opts_chunk$set(background='#FFFFFF')
 # opts_chunk$set(cache=TRUE, autodep=TRUE)
 opts_chunk$set(comment=NA)
+knit_hooks$set(document = function(x) {sub('\\usepackage[]{color}', '\\usepackage[usenames, dvipsnames]{xcolor}', x, fixed = TRUE)})
+
 @
 
 
 \begin{document}
 
 \section{Introduction}\label{sec:Introduction}
-
 Numerical modeling of complex systems is now an essential process in fields as diverse as natural sciences, engineering, quality or economics. 
-Jointly with modeling efforts, methods have been developed for the exploration and analysis of those simulators, 
+Jointly with modeling efforts, methods have been developed for the exploration and analysis of corresponding simulators, 
 in particular when runs are time consuming. 
 A popular approach in this case is to rely on surrogate models to alleviate the computational expense.
-Many surrogate models are used in practice: polynomials, splines, Support Vector Regression, Radial Basis Functions, random forests or Gaussian processes (GP).  
-They may be integrated in various strategies, see e.g., \citet{Wang2007}, \citet{Santana-Quintero2010}, \citet{Tabatabaei2015} and references therein.
+Many surrogate models are used in practice: polynomials, splines, support vector regression, radial basis functions, random forests or Gaussian processes (GP).  
+They may be integrated in various optimization strategies, see e.g., \citet{Wang2007}, \citet{Santana-Quintero2010}, \citet{Tabatabaei2015} and references therein.
 We focus here on GP-based strategies, which have been recognized as very well-suited for sequential designs of experiments, 
 and in particular in an optimization context \citep{Jones1998,Jones2001}. 
 
-The \pkg{GPareto} package proposes Gaussian-Process based sequential strategies to solve multi-objective optimization (MOO) problems
+The \gp package proposes Gaussian-Process based sequential strategies to solve multi-objective optimization (MOO) problems
 in a black-box, numerically expensive simulator context. More precisely, it considers the case of models with multiple outputs, 
-$y^{(1)}(\x), \ldots, y^{(q)}(\x)$ (where $y^{(i)}: \Xset \rightarrow \mathbb{R}$), that are optimized simultaneously.
+$y^{(1)}(\x), \ldots, y^{(q)}(\x)$ (where $y^{(i)}: \Xset \subset \Rset^d \rightarrow \mathbb{R}$), that are optimized simultaneously over a box-constrained domain $\Xset$.
 Typically, outputs (or \textit{objectives}) are conflicting (e.g., quality versus quantity, etc.), so there exists no solution where all objectives are minimized at once.
 The goal is then to identify the set of optimal compromise solutions, called a Pareto set \citep{Collette2003}.
 Defining that a point $\x^*$ dominates another point $\x$ if \textit{all} its objectives are better (which we denote by $\x \preceq \x^*$ in the following), the Pareto set $\mathbb{X}^*$ is the subset of the non-dominated points in $\Xset$:
@@ -126,18 +129,20 @@ The image of the Pareto set in the objective space, $y^{(1)}(\mathbb{X}^*), \ldo
 which is useful to practitioners to select solutions (see Figure \ref{fig:ex1d} for an illustration).
 In practice, the Pareto set is usually not finite, and optimization strategies aim at providing a finite set that represents $\mathbb{X}^*$ well.
 
+
 In general, numerical optimization has motivated a substantial activity in the \proglang{R} community: see for instance the 
-CRAN Task View on optimization and mathematical Programming \citep{theussl2014cran} or the recent special JSS issue \citep{Varadhan2014}.
-However, most works are dedicated to mono-objective optimization with large budgets. For small budgets, the packages \pkg{DiceOptim} \citep{Ginsbourger2015} and \pkg{tgp} \citep{Gramacy2007,Gramacy2010}
+CRAN Task View on optimization and Mathematical Programming \citep{theussl2014cran} or the recent special JSS issue \citep{Varadhan2014}.
+However, most works are dedicated to mono-objective optimization with large budgets. For small budgets, the packages \pkg{DiceOptim} \citep{Roustant2012,Ginsbourger2015} and \pkg{tgp} \citep{Gramacy2007,Gramacy2010}
 propose GP-based techniques, but for mono-objective problems only.
+There are a few packages on MOO in general: \pkg{nsga2R} \citep{Tsou2013}, \pkg{emoa} \citep{Mersmann2012}, \pkg{mopsocd} \citep{Naval2013}, \pkg{goalprog} \citep{Novomestky2008} and \pkg{mco} \citep{Mersmann2014}, which provide tools and algorithms such as NSGA-II algorithm implementations \citep{Deb2002} or hypervolume computations (see Section \ref{sec:MOO}). 
+As for methods available for expensive black-box functions optimization, the package \pkg{SPOT} \citep{Bartz-Beielstein2012} seems to be the only alternative to \gp.
 
-
-On the other hand, GP-based MOO has generated recently a substantial activity in the statistical and optimization communities, with focuses either on sampling strategies \citep{Ponweiser2008a,Wagner2010,Svenson2011,Emmerich2011,Picheny2013,Zuluaga2013} or on uncertainty quantification \citep{Bhardwaj2012,Calandra2014,Binois2015}.
+On the other hand, GP-based MOO has recently generated a substantial activity in the statistical and optimization communities, with focuses either on sampling strategies \citep{Ponweiser2008a,Wagner2010,Svenson2011,Emmerich2011,Picheny2013,Zuluaga2013} or on uncertainty quantification \citep{Bhardwaj2012,Calandra2014,Binois2015}.
 \gp aims at filling this gap by making most of the recent approaches available in a unified implementation to both MOO experts and end-users. To this end, a substantial effort has been given to provide graphical visualization and standard tuning, and many entry-points ranging from high-level interfaces to specific method tuning have been made available.
 
-\pkg{GPareto} is built upon the \pkg{DiceKriging} \citep{Roustant2012} package that offers Kriging model training for computer experiments.
+\gp is built upon the \pkg{DiceKriging} \citep{Roustant2012} package dedicated to Gaussian process modeling.
 Several associated packages deal with various related problems, in particular \pkg{DiceOptim} (mono-objective optimization) and \pkg{KrigInv} (algorithms for inversion problems) \citep{Chevalier2014b,Chevalier2014}.
-\pkg{GPareto} shares many aspects with those packages.
+\gp shares many aspects with those packages. This document is also available as a vignette in the package, which is available from the Comprehensive \proglang{R} Archive Network at \url{http://CRAN.R-project.org/package=GPareto} along with its full PDF documentation.
 
 The remainder of this paper reviews briefly the methods available in the package, describes important implementation aspects and functionalities, and provides illustrations through a few examples. 
 
@@ -145,60 +150,55 @@ The remainder of this paper reviews briefly the methods available in the package
 \section{Method}\label{sec:method}
 \subsection{Principles of Gaussian-process based optimization}\label{sec:EGO}
 We recall here very briefly the scheme common to most GP-based (mono- or multi-objective) optimization,
-as in the famous EGO algorithm (Efficient Global Optimization) proposed in the seminal article of \citet{Jones1998}.
+as in the famous EGO algorithm (efficient global optimization) proposed in the seminal article of \citet{Jones1998}.
 
-\subsubsection{The Mono-objective case}
+\subsubsection{The mono-objective case}
 Let $y$ be the output of the numerical model of interest and $\x \in \Rset^d$ the inputs to be optimized over. 
 Considering for now that $y$ is a scalar, it is assumed to be a realization of a Gaussian process $F(\x)$
-with (unknown) mean $\mu(\x)$ and covariance $c(\x, \x')$.
+with mean $\mu(\x)$ and covariance $c(\x, \x')$ known up to some parameters.
 
 \begin{itemize}
  \item[Step 1] Generate an initial set of $n$ observations: $y_1=y(\x_1), \ldots, y_n=y(\x_n)$. Typically, $\{\x_1, \ldots, \x_n\}$ are chosen using a \textit{space-filling} design. A classical rule-of-thumb is to use $n=10\times d$. 
- \item[Step 2] Fit the GP model to the data, by estimating the mean $\mu(\x)$ and covariance $c(\x, \x')$. Typically, a parametric form is assumed for those functions, whose parameters are adjusted using maximum likelihood approaches.
- The GP model is the distribution of $Y(\x)$ conditional on the observations $y_1, \ldots, y_n$, assuming that $\mu(\x)$ and covariance $c(\x, \x')$ are estimated accurately.
+ \item[Step 2] Fit the GP model to the data, by estimating the mean $\mu(\x)$ and covariance $c(\x, \x')$. Typically, a parametric form is assumed for those functions, whose parameters are adjusted, e.g., by using maximum likelihood estimation.
+ The GP model is the distribution of $Y(\x)$ conditional on the observations $y_1, \ldots, y_n$, with plugged-in mean $\mu$ and covariance $c$.
  \item[Step 3] A new point $\x\+$ is chosen as the maximizer of a so-called \textit{infill criterion} which is based on the GP model. This step requires running an inner optimization loop to find the best point over $\Rset^d$.
- \item[Step 4] A new observation $y\+=y(\x\+)$ is obtained by running the simulator and the GP model is updated by conditioning on $f\+$. At this step, the estimates of $\mu$ and $c$ might be updated.
+ \item[Step 4] A new observation $y\+=y(\x\+)$ is obtained by running the simulator and the GP model is updated by conditioning on $y\+$. At this step, the estimates of $\mu$ and $c$ might be updated.
 \end{itemize}
 Steps 3 and 4 are repeated until the simulation budget is exhausted or when a stopping criterion is met.
 
-\pkg{GPareto} focuses on Steps 3 and 4. Hence, its main entry function, \code{GParetoptim}, requires a GP model as an input. 
-Note, however, that \pkg{GPareto} also provides a ``black-box'' entry function, namely \code{easyGParetoptim}, that encompasses Steps 1 to 4
-(see the dedicated Section \ref{sec:easyGParetoptim}).
-
 There are many \proglang{R} packages to perform Step 1, see for instance \pkg{planor} \citep{Kobilinsky2015}, \pkg{DiceDesign} \citep{Dupuy2015}, or \pkg{lhs} \citep{Carnell2016}.
-For Step 2, \pkg{GPareto} relies on the \pkg{DiceKriging} package, which offers a large variety of mean and covariance functions. 
+For Step 2, \gp relies on the \pkg{DiceKriging} package, which offers a choice of mean and covariance functions. 
 The model parameters estimation is based on maximum likelihood, see \citet{Roustant2012} for details.
 
-Step 3 defines the sampling strategy, as the infill criterion determines the balance between exploration (search for new solutions) and exploitation (local improvement around existing observations). The EGO algorithm is based on the so-called \textit{Expected Improvement} (EI) criterion.
-The improvement is defined as the difference between the minimum of the observations and the new function value, such that for a GP model, EI is the conditional expectation of the improvement provided by a new observation $Y(\x)$: 
+Step 3 defines the sampling strategy, as the infill criterion determines the balance between exploration (search for new solutions) and exploitation (local improvement around existing observations). The EGO algorithm is based on the so-called \textit{expected improvement} (EI) criterion.
+The improvement is defined as the difference between the current minimum of the observations and the new function value, such that for a GP model, EI is the conditional expectation of the improvement provided by a new observation $Y(\x)$: 
 \begin{equation*}
- EI(\x) = \mathbb{E}\left[ \max(0, \min\limits_{1 \leq i \leq n} (y_i - Y(\x)) \Big| Y(\x_1) = y_1, \dots, Y(\x_n) = y_n \right],
+ EI(\x) = \mathbb{E}\left[ \max\left(0, \min\limits_{1 \leq i \leq n} \left(y_i - Y(\x)\right) \right) \Big| Y(\x_1) = y_1, \dots, Y(\x_n) = y_n \right],
 \end{equation*}
 which has a closed form expression \citep[see][for calculations]{Jones1998}.
 
-\subsubsection{The Multi-objective case}
-When multiple objectives are considered ($f$ has values in $\Rset^q$), Steps 2 and 3 need to be modified. 
+\subsubsection{The multi-objective case}
+When multiple objectives are considered ($y$ has values in $\Rset^q$), Steps 2 and 3 need to be modified. 
 Let us remark first that it is possible to go back to a scalar problem and apply standard methods, for instance by relying on 
 objectives aggregation \citep{Knowles2006,Zhang2010} or modeling desirability functions \citep{Henkenjohann2007}. 
 However, these have been found to be relatively poor solutions in practice \citep{Henkenjohann2007,Svenson2011}.
 
-\pkg{GPareto} focuses on approaches where GP models are fitted independently to each objective. 
-Although it is possible to account for correlation between the different objectives (for instance using 
-co-kriging models \citep[e.g.,][]{Alvarez2011,Kleijnen2014}, \citet{Svenson2011} showed that it provided little benefit compared to the 
-additional complexity. 
+\gp focuses on approaches where GP models are fitted independently to each objective. 
+Although it is possible to account for correlation between the different objectives, for instance using 
+co-kriging models \citep[e.g.,][]{Alvarez2011}, experimental results in \citet{Svenson2011,Kleijnen2014} 
+suggested that it provides little benefit compared to the additional complexity. 
 
-Choosing infill points from a set of GP models is a complex question (see Section \ref{sec:MOO}). Within \pkg{GPareto}, 
+Choosing infill points from a set of GP models is a complex question (see Section \ref{sec:MOO}). Within \gp, 
 we focus on approaches that compute a single infill criterion from the list of models. Hence, Step 3 is identical 
 to the mono-objective case, provided that an adequate infill criterion is used.
-
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Review of surrogate-based and Bayesian multi-objective optimization}\label{sec:MOO}
 
-In the mono-objective case, the Expected Improvement criterion evaluates the potential gain of an additional point in terms of the expected decrease over the best observation so far. 
-In a similar fashion, a multi-objective improvement function can be defined by estimating the expected ``progress'' brought by a new observation (relatively to the current set of non-dominated observations $\mathcal{P}_n$).
+In the mono-objective case, the expected improvement criterion evaluates the potential gain of an additional point in terms of the expected decrease over the best observation so far. 
+In a similar fashion, a multi-objective improvement function can be defined by estimating the expected ``progress'' brought by a new observation (relatively to the current set of non-dominated observations $\PF$).
  
 This leaves room to put the focus either on a good coverage, on extremities, or on convergence toward the actual Pareto front, for which 
 specific metrics, such as the \textit{hypervolume} or \textit{epsilon indicators}, have been proposed \citep[see e.g.,][]{Svenson2011,Emmerich2011}. 
@@ -211,38 +211,44 @@ An illustrative example is given in Figure \ref{fig:misc}.
 \centering
 \begin{subfigure}[b]{0.49\linewidth}
 \centering
-<<EpsInd,echo=FALSE, fig.width = 5, fig.height = 5, message=FALSE, warning=FALSE>>=
+<<EpsInd,echo=FALSE, fig.width = 5, fig.height = 5>>=
+## Figure 1) Left
 library("GPareto", quietly = TRUE)
-ParetoRef <- matrix(c(0.2,0.22,0.35,0.5,0.65,0.8,0.7,0.6,0.55,0.4,0.25,0.2),6,2)
 
-## Epsilon indicateur
-plot(ParetoRef,xlim=c(0,1),ylim=c(0,1),pch=21, cex=2, col="black",
-     bg = "red", bty="l", xlab=expression(f[1]), ylab=expression(f[2])) #,xaxt="n",yaxt="n")
-plotParetoEmp(ParetoRef,col="red",lwd=2, lty = 2)
+# Pareto front creation
+ParetoRef <- matrix(c(0.2, 0.22, 0.35, 0.5, 0.65, 0.8, 0.7, 0.6, 0.55, 0.4, 0.25, 0.2), 6, 2)
+
+# Plot epsilon indicator
+plot(ParetoRef, xlim = c(0, 1), ylim = c(0, 1), pch = 21, cex = 2, col = "black", bg = "red", bty = "l",
+     xlab = expression(f[1]), ylab = expression(f[2]))
+plotParetoEmp(ParetoRef, col = "red", lwd = 2, lty = 2)
 
 points(x = 0.45, y = 0.32,  col = "black", bg = "blue", pch = 22, cex = 2)
-lines(c(0.45,0.45,0.65), c(0.55,0.32,0.32), lty = 5, lwd = 1, col = "blue")
+lines(c(0.45, 0.45, 0.65), c(0.55, 0.32, 0.32), lty = 5, lwd = 1, col = "blue")
 
 points(x = 0.1, y = 0.9,  col = "black", bg = "green", pch = 22, cex = 2)
-lines(c(0.1,0.1,0.2), c(1,0.9,0.9), lty = 5, lwd = 1, col = "green")
+lines(c(0.1, 0.1, 0.2), c(1, 0.9, 0.9), lty = 5, lwd = 1, col = "green")
 
-arrows(0.1,0.95,0.2,0.95, code = 3, length = 0.1, col = "green")
+arrows(0.1, 0.95, 0.2, 0.95, code = 3, length = 0.1, col = "green")
 
-arrows(0.55,0.32,0.55,0.4, code = 3, length = 0.1, col = "blue")
+arrows(0.55, 0.32, 0.55, 0.4, code = 3, length = 0.1, col = "blue")
 @
 
 \end{subfigure}%
 \begin{subfigure}[b]{0.49\linewidth}
 \centering
 <<HyperInd,echo=FALSE, fig.width = 5, fig.height = 5>>=
-plot(ParetoRef,xlim=c(0,1),ylim=c(0,1),pch=21, cex=2, col="black",
-     bg = "red", bty="l", xlab=expression(f[1]), ylab=expression(f[2])) #,xaxt="n",yaxt="n")
-plotParetoEmp(ParetoRef,col="red",lwd=2, lty = 2)
+
+## Figure 1) right
+# Plot hypervolume indicator
+plot(ParetoRef, xlim = c(0, 1), ylim = c(0, 1), pch = 21, cex = 2, col = "black", bg = "red", bty = "l",
+     xlab = expression(f[1]), ylab = expression(f[2]))
+plotParetoEmp(ParetoRef, col = "red", lwd = 2, lty = 2)
 
 polygon(x = c(0.45, 0.45, 0.65, 0.65, 0.5, 0.5),
-        y = c(0.55, 0.32, 0.32, 0.4, 0.4, 0.55), col = rgb(0,0,1,0.5), border = NA)
+        y = c(0.55, 0.32, 0.32, 0.4, 0.4, 0.55), col = rgb(0, 0, 1, 0.5), border = NA)
 
-polygon(x = c(0.1, 0.1, 0.2, 0.2), y = c(1, 0.9, 0.9, 1), col = rgb(0,1,0,0.5), border =
+polygon(x = c(0.1, 0.1, 0.2, 0.2), y = c(1, 0.9, 0.9, 1), col = rgb(0, 1, 0, 0.5), border =
           NA)
 
 polygon(x = c(0.2, 0.2, 0.22, 0.22, 0.35, 0.35, 0.5, 0.5, 0.65, 0.65, 0.8, 0.8, 1, 1 ),
@@ -250,11 +256,11 @@ polygon(x = c(0.2, 0.2, 0.22, 0.22, 0.35, 0.35, 0.5, 0.5, 0.65, 0.65, 0.8, 0.8, 
         density = 15, col = "red", border = NA)
 
 points(x = 0.45, y = 0.32,  col = "black", bg = "blue", pch = 22, cex = 2)
-lines(c(0.45,0.45,0.65), c(0.55,0.32,0.32), lty = 5, lwd = 1, col = "blue")
+lines(c(0.45, 0.45, 0.65), c(0.55, 0.32, 0.32), lty = 5, lwd = 1, col = "blue")
 
 
 points(x = 0.1, y = 0.9,  col = "black", bg = "green", pch = 22, cex = 2)
-lines(c(0.1,0.1,0.2), c(1,0.9,0.9), lty = 5, lwd = 1, col = "green")
+lines(c(0.1, 0.1, 0.2), c(1, 0.9, 0.9), lty = 5, lwd = 1, col = "green")
 
 points(x = 1, y = 1, pch = 13, cex = 2)
 @
@@ -266,17 +272,17 @@ but the blue point is better in terms of volume increment.}%
 \label{fig:misc}%
 \end{figure} 
 
-These indicators, among others, have been used to define ``generalized'' expected improvements.
+These indicators, among others, have been used to define generalizations of the expected improvement.
 Empirical comparisons showed the clear superiority of some approaches to others \citep{Svenson2011,Wagner2010}, but no global consensus on a particular improvement function. 
-In \gp, two infill criteria derived from this point of view are available: the \emph{Expected Hypervolume Improvement} \citep[EHI, ][]{Emmerich2011} and 
-\emph{Expected Maximin Improvement} \citep[EMI, ][related to the epsilon indicator]{Svenson2010}. See the corresponding references for the technical details.
+In \gp, two infill criteria derived from this point of view are available: the \emph{expected hypervolume improvement} \citep[EHI, ][]{Emmerich2011} and 
+\emph{expected maximin improvement} \citep[EMI, ][related to the epsilon indicator]{Svenson2010}. See the corresponding references for the technical details.
 
-Two additional alternatives are proposed.
-First, in the \emph{SMS-EGO} approach \citep[S-Metric Selection EGO, ][]{Ponweiser2008a,Wagner2010}, the improvement is calculated as the hypervolume added to the current Pareto front by the lower confidence bound of the prediction at $\x$, 
+Two alternatives have been included in \gp as well.
+First, in the \emph{SMS-EGO} approach \citep[S-metric selection EGO, ][]{Ponweiser2008a,Wagner2010}, the improvement is calculated as the hypervolume added to the current Pareto front by the lower confidence bound of the prediction at $\x$, 
 hence it is closely related, but not equal to the EHI.  
 To avoid large plateaus of zero improvement, an adaptive penalization is provided in regions where the lower confidence bound is dominated.
 
-Finally, the Stepwise Uncertainty Reduction (SUR) criterion of \cite{Picheny2013} is in turn concerned with the probability of non-domination (also called probability of improvement),
+Finally, the \emph{stepwise uncertainty reduction} (SUR) criterion of \cite{Picheny2013} is in turn concerned with the probability of non-domination (also called probability of improvement),
 that is, the probability of a point not to be dominated by the current Pareto set: $\Proba{\x  \not \preceq \X_n}$. Intuitively, regions in the design space with non-null probabilities indicate a potential improvement
 for the Pareto front, and the improvement considered is the reduction of the average of this probability over the design space.
 
@@ -383,16 +389,16 @@ Pareto sets and fronts are shown in bold.}%
 \label{fig:GPsim}%
 \end{figure}
 
-As described in \citet{Binois2015}, this approach requires conditional simulations on discrete sets of inputs (for instance, a grid or a space-filling sample, 
+As described in \citet{Binois2015}, the current version of this approach requires conditional simulations on discrete sets of inputs (for instance, a grid or a space-filling sample, 
 which is the solution adopted in \gp, see Section \ref{sec:pkgUQ}). 
 This set must be large to ensure that no important potential solution is missed, which makes this approach computationally intensive.
 
 
 \subsubsection{Pareto set (variable space)}
 
-As for the Pareto front, returning a smooth estimate of the entire Pareto set $\mathbb{X}^*$ may be useful to practitioners. We propose here to rely on two complementary approaches. 
+In a similar fashion, returning a smooth estimate of the entire Pareto set $\mathbb{X}^*$ may be useful to practitioners. We propose here to rely on two complementary approaches. 
 
-First, as for the Pareto front, conditional simulations can be used here: from each set of GP realizations, the Pareto set $\mathbb{X}^*_i$ can be obtained.
+First, conditional simulations can be used here: from each set of GP realizations, the Pareto set $\mathbb{X}^*_i$ can be obtained.
 Then, the sets $\mathbb{X}^*_1, \ldots, \mathbb{X}^*_N$ can be used to estimate a density, e.g., using kernel density estimation. 
 
 A complementary measure is the probability for a given point in the variable space to be non-dominated by the current set of observations, $\Proba{\x  \not \preceq \X_n}$. 
@@ -412,49 +418,52 @@ The structure of the package reflects its main orientations: multi-objective opt
 As described in Section \ref{sec:EGO}, Gaussian-process based optimization can be separated in four steps. Depending on the characteristics of the problem at hand, several levels of control are available. 
 For the sake of clarity, we start by describing the highest-level functionalities before detailing routines that enable more control on the optimization process or may be integrated in other procedures.
 
-\subsubsection{User-friendly wrapper: easyGParetoptim}
+\subsubsection[User-friendly wrapper: easyGParetoptim]{User-friendly wrapper: \code{easyGParetoptim}}
 \label{sec:easyGParetoptim}
 
-This is a simple interface to multi-objective optimization that perform all steps described in Section \ref{sec:EGO}, which does not require much knowledge on the specificities of Gaussian process based optimization. If no additional control parameters are set, all Steps 1-4 are performed according to default values.\\
+This is a simple interface to multi-objective optimization that perform all steps described in Section \ref{sec:EGO}, which does not require much knowledge on the specificities of Gaussian process based optimization. If no additional control parameters are set, all Steps 1-4 are performed according to default values.
 
 The minimal arguments for \code{easyGParetoptim} are the following, common with many optimization methods in \proglang{R} such as \code{optim}:
 \begin{itemize}
-	\item \code{fn}, this is the multi-objective function that returns the values of the objectives at a given design;
-	\item \code{budget}, the maximal number of evaluations of the expensive black-block function \code{fn};
-	\item \code{lower}, \code{upper}, vectors giving the limits of the domain for optimization.
+  \item \code{fn}, this is the multi-objective function that returns the values of the objectives at a given design;
+  \item \code{budget}, the maximal number of evaluations of the expensive black-block function \code{fn};
+  \item \code{lower}, \code{upper}, vectors giving the limits of the domain for optimization.
 \end{itemize}
 
 A design of experiments may be passed using the argument \code{par} \textemdash otherwise it is a Maximin LHS design constructed from \pkg{DiceDesign} \textemdash and corresponding values provided with \code{values}. Additional tuning of the inner procedures are available using the \code{control} list whose elements are detailed next.  
 
-\subsubsection{GParetoptim}
+By default, \code{easyGParetoptim} uses \code{SMS} as criterion, with \code{pso} as inner-optimization routine. This choice has been made to favor speed. They are also shared by the following \code{GParetoptim} routine.
+
+\subsubsection[GParetoptim]{\code{GParetoptim}}
 This function handles Steps 3 and 4, hence assuming that users have performed a design of experiments and built surrogate models at their convenience. 
-More setting parameters are directly exposed, such as \code{crit} for selecting the infill criteria or \code{cov.reestim} to decide whether or not hyperparameters are updated after adding new observations. 
+More parameters are directly exposed, such as \code{crit} for selecting the infill criteria or \code{cov.reestim} to decide whether or not hyperparameters are updated after adding new observations. 
 As for \code{easyGParetoptim}, more flexibility is given using control parameters, \code{optim\_control} for the optimization of the infill criterion and \code{crit\_control} for parameters of this latter, 
 that are useful for the following \code{crit\_optimizer} function. 
 
-\subsubsection{crit optimizer}
+\subsubsection[crit optimizer]{\code{crit\_optimizer}}
   
-Optimizing the criteria, a.k.a.\ acquisition functions, is quite complicated due to their multi-modality: see Figure \ref{fig:ex2} for an illustration. Besides, in general, no derivative expressions are available and there are large plateaus. On top of that, the attraction basin of the global optimum of the infill criterion may have a very small volume in the variable space \citep[see][for the illustration of this problem]{Roustant2012}. Nonetheless, acquisition functions are typically much cheaper to evaluate than the objective functions and intensive optimization can be carried out.\\
+Optimizing the criteria, a.k.a.\ acquisition functions, is quite complicated due to their multi-modality: see Figure \ref{fig:ex2} for an illustration. Besides, in general, no derivative expressions are available and there are large plateaus. On top of that, the attraction basin of the global optimum of the infill criterion may have a very small volume in the variable space \citep[see][for the illustration of this problem]{Roustant2012}. Nonetheless, acquisition functions are typically much cheaper to evaluate than the objective functions and intensive optimization can be carried out.
 
-Three solutions to perform this inner optimization are provided in \pkg{GPareto}: 
+Three solutions to perform this inner optimization are provided in \gp: 
 \begin{enumerate}
-	\item the user can provide a set of candidate points with \code{optimcontrol} in \code{crit_optimizer} and \code{GParetoptim} (hence reducing the problem to a discrete search);
-	\item the default optimization routine is \code{genoud} \citep{Mebane2011}, a genetic algorithm;
-	\item the \code{psoptim} optimization method \citep{Bendtsen2012}, a particle swarm algorithm is also provided;
+  \item the user can provide a set of candidate points with \code{optimcontrol} in \code{crit_optimizer} and \code{GParetoptim} (hence reducing the problem to a discrete search);
+  \item the default optimization routine is \code{genoud} \citep{Mebane2011}, a genetic algorithm;
+  \item the \code{psoptim} optimization method \citep{Bendtsen2012}, a particle swarm algorithm is also provided;
 \end{enumerate}
 and the corresponding tuning parameters may be passed to \code{optimcontrol}. 
 Passing any other optimization method is also possible, given that it works as the standard \code{optim} method in \proglang{R} from package \pkg{stats} \citep{R2015}.
 
-\subsubsection{crit functions}
+\subsubsection{Criteria functions}
 \label{subsub:crit}
-Four criteria are available in \pkg{GPareto} 1.0.3: 
+Four criteria are available in \gp 1.1.0: 
 \begin{itemize}
-	\item \code{crit_SMS} for the SMS-EGO criterion \citep{Ponweiser2008a,Wagner2010} (based on the Matlab source code of the authors);
-	\item \code{crit_EHI} for the Expected Hypervolume Improvement criterion \citep{Emmerich2011} (based on the Matlab source code of the authors for the bi-objective case);
-	\item \code{crit_EMI} for the Expected Maximin Improvement criterion \citep{Svenson2010,Svenson2011};
-	\item \code{crit_SUR} for the Expected Excursion Volume Reduction criterion \citep{Picheny2013}.
+  \item \code{crit_SMS} for the SMS-EGO criterion \citep{Ponweiser2008a,Wagner2010} (based on the \proglang{MATLAB} source code of the authors);
+  \item \code{crit_EHI} for the expected hypervolume improvement criterion \citep{Emmerich2011} (based on the \proglang{MATLAB} source code of the authors for the bi-objective case);
+  \item \code{crit_EMI} for the expected maximin improvement criterion \citep{Svenson2010,Svenson2011};
+  \item \code{crit_SUR} for the expected excursion volume Reduction criterion \citep{Picheny2013}.
 \end{itemize}
-The \code{crit_SMS} criterion has an analytical expression for any number of objectives while the one for \code{crit_EHI} is only for the bi-objective case. There is a semi-analytical\footnote{numerical quadrature is needed for some 1-dimensional integrals, see \cite{Svenson2011}.} formula for \code{crit_EMI} but it has not been implemented in \pkg{GPareto} yet. Note that the formula for \code{crit_EHI} is coded using \pkg{Rcpp}  \citep{Eddelbuettel2011,Eddelbuettel2013}, 
+
+The \code{crit_SMS} criterion has an analytical expression for any number of objectives while the one for \code{crit_EHI} is only for the bi-objective case. There is a semi-analytical\footnote{numerical quadrature is needed for some 1-dimensional integrals, see \cite{Svenson2011}.} formula for \code{crit_EMI}. Note that the formula for \code{crit_EHI} is coded using \pkg{Rcpp}  \citep{Eddelbuettel2011,Eddelbuettel2013}, 
 which offers considerable speed-up over an \proglang{R} implementation.\\ 
  
 For \code{crit_EMI} and \code{crit_EHI} with $m > 2$, computations rely on Sample Average Approximation (SAA) \citep{Shapiro2003}, as proposed e.g., in \cite{Svenson2011}. 
@@ -477,25 +486,25 @@ A brief comparison of the different criteria is given in Table \ref{tab:GPareto_
 
 \begin{table}[htpb]
 \centering
-\caption{Summary of the characteristics of infill criteria available in \pkg{GPareto}. The  computational costs are given for a bi-objective example. Note that the cost of \code{crit\_EHI} is low in this case but increase exponentially with the output dimension. \code{SURcontrol} is a list of parameters depending on the integration strategy chosen.}
-\label{tab:GPareto_crits}
 \begin{tabular}{l||c|c|c|c|c|c}
 \multirow{ 2}{*}{Name}      & \multirow{ 2}{*}{Indicator} & \multirow{ 2}{*}{Analytical}     & \multirow{ 2}{*}{$m$} & \multirow{ 2}{*}{Cost} & Scaling & \multirow{ 2}{*}{Parameters} \\ 
 & & & & & dependent & \\ \hhline{=||=|=|=|=|=|=} 
 \multirow{ 2}{*}{\code{crit\_EHI}} & \multirow{ 2}{*}{Hypervolume}                     & $m =2$ & \multirow{ 2}{*}{Any}                  & + to & \multirow{ 2}{*}{Yes} & \code{refPoint}, \\ 
                                    &                                                   &      only          &  & +++    &  & \code{nb.samp} ($m>2$)  \\ \hline
-\code{crit\_EMI} & Additive-$\epsilon$  & No             & Any                  & ++ & Yes & \code{nb.samp}\\ \hline
+\code{crit\_EMI} & Additive-$\epsilon$  & No             & Any                  & ++ & Yes & \code{nb.samp} ($m>2$)\\ \hline
 \code{crit\_SMS} & Hypervolume                      & Yes            & Any                  & +  & Yes & \code{refPoint} \\ \hline
-\multirow{ 2}{*}{\code{crit\_SUR}} & Pr. of non         & \multirow{ 2}{*}{No}   & \multirow{ 2}{*}{$m \leq 3$}  &   \multirow{ 2}{*}{+++}  & \multirow{ 2}{*}{No} & \code{integration}\\
-& domination & & & & & \code{points}
+\multirow{ 2}{*}{\code{crit\_SUR}} & Probability of          & \multirow{ 2}{*}{No}   & \multirow{ 2}{*}{$m \leq 3$}  &   \multirow{ 2}{*}{+++}  & \multirow{ 2}{*}{No} & \code{integration}\\
+& non-domination & & & & & \code{points}
 \end{tabular}
+\caption{Summary of the characteristics of infill criteria available in \gp. The  computational costs are given for a bi-objective example. Note that the cost of \code{crit\_EHI} is low in this case but increase exponentially with the output dimension. \code{SURcontrol} is a list of parameters depending on the integration strategy chosen.}
+\label{tab:GPareto_crits}
 \end{table}
 
-Test functions are provided in \pkg{GPareto}, such as problems in the MOP \citep{VanVeldhuizen1999},  ZDT \citep{Zitzler2000} and DTLZ \citep{Deb2005} test suites.  
+Test functions are provided in \gp, such as problems in the MOP \citep{VanVeldhuizen1999},  ZDT \citep{Zitzler2000} and DTLZ \citep{Deb2005} test suites.  
 
 \subsection{Functions related to uncertainty quantification and post-processing}\label{sec:pkgUQ}
 
-\subsubsection{User-friendly wrapper: plotGPareto}
+\subsubsection[User-friendly wrapper: plotGPareto]{User-friendly wrapper: \code{plotGPareto}}
 
 Results given by \code{easyGParetoptim} or \code{GParetoptim} can be visualized using the 
 \code{plotGPareto} function. The default output of this function is to display only the points visited during optimization along with optimal points. 
@@ -505,18 +514,19 @@ a perspective view of the Pareto front (three) or a representation in parallel c
 Then, three different outputs are possible to improve insight on the algorithm results. These can be obtained either by setting some options 
 of \code{plotGPareto} or directly by calling the corresponding functions:
 \begin{itemize}
-	\item an estimation of the Vorob'ev expectation giving the expected location of the Pareto front along with a visualization of the corresponding uncertainty 
-	(option \code{UQ\_PF=TRUE} or with \code{CPF} and \code{plotSymDevFun});
-	\item an estimation of the density of Pareto optimal points in the variable space (option \code{UQ\_dens=TRUE} or with \code{ParetoSetDensity});
-	\item a visualization of the probability of non-domination in the variable space (option \code{UQ\_PF}\code{=} \code{TRUE} or with \code{plot\_uncertainty}).
+  \item an estimation of the Vorob'ev expectation giving the expected location of the Pareto front along with a visualization of the corresponding uncertainty 
+  (option \code{UQ\_PF = TRUE} or with \code{CPF} and \code{plotSymDevFun});
+  \item an estimation of the density of Pareto optimal points in the variable space (option \code{UQ\_dens = TRUE} or with \code{ParetoSetDensity});
+  \item a visualization of the probability of non-domination in the variable space (option \code{UQ\_PF} \code{=} \code{TRUE} or with \code{plot\_uncertainty}).
 \end{itemize}
 
 \subsubsection{Uncertainty quantification on Pareto front}
-The entry function is the creator of the \code{CPF} class (for Conditional Pareto Front), which deals with computing the probability for a target in the objective space to be dominated, also known as the attainment function, Vorob'ev Expectation (VE) and Vorob'ev deviation (VD), from a grid discretization. It takes as main arguments:
+The entry function is the creator of the \code{CPF} class (for conditional pareto front), which deals with computing the probability for a target in the objective space to be dominated, also known as the attainment function, Vorob'ev expectation (VE) and Vorob'ev deviation (VD), from a grid discretization. It takes as main arguments:
 \begin{itemize}
-	\item \code{fun1sims}, \code{fun2sims} the sets of conditional simulations for both objectives, that can be computed for instance using the \code{simulate} function of \pkg{DiceKriging};
-	\item \code{response} the known objective values. 
+  \item \code{fun1sims}, \code{fun2sims} the sets of conditional simulations for both objectives, that can be computed for instance using the \code{simulate} function of \pkg{DiceKriging};
+  \item \code{response} the known objective values. 
 \end{itemize}
+
 
 The empirical attainment function is calculated on a grid in the objective space from the CPF sets given by the conditional simulations. 
 Taking advantage of the regularity of the grid to compute volumes, the Vorob'ev expectation is computed quickly by dichotomy. Then the Vorob'ev deviation is a sum of hypervolume indicator values. 
@@ -548,22 +558,22 @@ the target in the variable space. This step requires running an optimization alg
 
 \subsubsection{Fast objectives}
 
-Motivated by applications where some objective function are computable at a negligible cost compared to other objectives, \pkg{GPareto} offers an option for MOO in case of co-existing cheap- and expensive-to-evaluate objectives. 
+Motivated by applications where some objective functions are computable at a negligible cost compared to other objectives, \gp offers an option for MOO in case of co-existing cheap- and expensive-to-evaluate objectives. 
 As an example, in structural mechanics one objective is typically the mass (which is directly derived from the design variables) and the other depends on the response of the system, hence involving a finite element model.
-To ensure compatibility with the infill criteria, fast objectives are wrapped in the \code{fastfun} class which mimics the behavior of methods such as \code{predict} or \code{update}. Then predicting the value at a new point amounts to evaluating the fast function, which returns the corresponding value with a zero prediction variance, exactly like what happens for already evaluated points. They may be used with the \code{cheapfn} argument in \code{easyGParetoptim}, \code{GParetoptim} and \code{crit\_optimizer}.\\
+To ensure compatibility with the infill criteria, fast objectives are wrapped in the \code{fastfun} class which mimics the behavior of methods such as \code{predict} or \code{update}. Then predicting the value at a new point amounts to evaluating the fast function, which returns the corresponding value with a zero prediction variance, exactly like what happens for already evaluated points. They may be used with the \code{cheapfn} argument in \code{easyGParetoptim}, \code{GParetoptim} and \code{crit\_optimizer}.
 
 \subsubsection{Numerical stability}
 
 Another computational challenge with Kriging, discussed, e.g., in \cite{Roustant2012}, is the numerical non invertibility of covariance matrices. It usually happens whenever design points are too close. 
- This is especially troublesome in optimization since, when converging, points are likely to be added close to each other. In \pkg{GPareto}, preventing this problem is achieved with the  \code{checkPredict} function. Before evaluating the selected criterion, \code{checkPredict} tests whether the new point $\x$ is too close to existing ones, with a tunable threshold that can be passed as argument. Three options are available to define when designs are considered as ``too close'':
+ This is especially troublesome in optimization since, when converging, points are likely to be added close to each other. In \gp, preventing this problem is achieved with the  \code{checkPredict} function. Before evaluating the selected criterion, \code{checkPredict} tests whether the new point $\x$ is too close to existing ones, with a tunable threshold that can be passed as argument. Three options are available to define when designs are considered as ``too close'':
 \begin{itemize}
-	\item minimal Euclidean distance in the input space: $\min \limits_{1 \leq i \leq n} d(\x, \x_i)$;
-	\item ratio of the predictive variance $s_n(\x)^2$ over the variance parameter for stationary kernels;
-	\item minimal ``canonical distance'' associated with $k_n$: $\min \limits_{1 \leq i \leq n} \sqrt{k_n(\x, \x) - 2 k_n(\x, \x_i) + k_n(\x_i, \x_i)}$.
+  \item minimal Euclidean distance in the input space: $\min \limits_{1 \leq i \leq n} d(\x, \x_i)$;
+  \item ratio of the predictive variance $s_n(\x)^2$ over the variance parameter for stationary kernels;
+  \item minimal \emph{canonical} distance coupled with $k_n$: $\min \limits_{1 \leq i \leq n} \sqrt{k_n(\x, \x) - 2 k_n(\x, \x_i) + k_n(\x_i, \x_i)}$.
 \end{itemize} 
-The first two options are also used in \pkg{KrigInv} and \pkg{DiceOptim} respectively. The first one is the less computationally demanding but also the less robust.\\
+The first two options are also used in \pkg{KrigInv} and \pkg{DiceOptim} respectively. The first one is the less computationally demanding but also the less robust.
  
-Moreover, to improve stability of the update of already existing models with new observations, it is possibly attempted twice. First, an update with re-estimation of the hyperparameters is performed. Then, if it has failed, a new update is tested with the old hyperparameters. If this is still insufficient to train the model with all observations, the user may try to remove some points or apply the \emph{jitter} technique consisting in adding a small constant to the diagonal of the covariance matrix to improve its condition number, see e.g., \cite{Roustant2012}. Replacing two close observations by one observation and its estimated derivative as proposed in \cite{Osborne2010} is another appealing solution.\\ 
+Moreover, to improve stability of the update of already existing models with new observations, it is possibly attempted twice. First, an update with re-estimation of the hyperparameters is performed. Then, if it has failed, a new update is tested with the old hyperparameters. If this is still insufficient to train the model with all observations, the user may try to remove some points or apply the \emph{jitter} technique consisting in adding a small constant to the diagonal of the covariance matrix to improve its condition number, see e.g., \cite{Roustant2012}. Replacing two close observations by one observation and its estimated directional derivative as proposed in \cite{Osborne2010} is another appealing solution.  
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -573,10 +583,10 @@ Moreover, to improve stability of the update of already existing models with new
 This section shows the different functionalities of \gp on three classical toy examples.
 
 \subsection{Two objectives, unidimensional example}
-We consider the following simple 1D bi-objective optimization problem from the literature, see e.g., \cite{VanVeldhuizen1999}, rescaled to $[0,1]$, to illustrate the different steps of the procedure and the key concepts of GP-based multi-objective optimization:\\
+We consider the following simple 1D bi-objective optimization problem from the literature, see e.g., \cite{VanVeldhuizen1999}, rescaled to $[0,1]$, to illustrate the different steps of the procedure and the key concepts of GP-based multi-objective optimization:
 $$\text{MOP2}(x)=\left\{ \begin{array}{l c r}
- f_1 &=& 1 - \exp((1-x)^2)\\
- f_2 &=& 1 - \exp((1+x)^2)
+ f_1 &=& 1 - \exp\left((1-x)^2\right)\\
+ f_2 &=& 1 - \exp\left((1+x)^2\right)
 \end{array} \right. $$
 
 <<echo=FALSE, message=FALSE, warning=FALSE>>=
@@ -618,8 +628,8 @@ Note that EHI requires a \textit{reference point} as a parameter, which correspo
 upper bound for each objective (here $[2,2]$, if not provided, it is estimated at each iteration, see Section \ref{subsub:crit}). The other mandatory inputs are the GP models \texttt{model}, the objective function \texttt{fn} number of steps (\texttt{nsteps}) and the design bounds (\texttt{lower} and \texttt{upper}).
 <<warning=FALSE>>=
 res <- GParetoptim(model = model, fn = MOP2, crit = "EHI", 
-                   nsteps = 7, lower = 0, upper = 1, 
-                   critcontrol = list(refPoint = c(2, 2)))
+  nsteps = 7, lower = 0, upper = 1, 
+  critcontrol = list(refPoint = c(2, 2)))
 @
 By default, \code{GParetoptim} prints the points chosen and their corresponding evaluations, along with the value of the sampling criterion. 
 The criterion here decreases almost monotonically, since as the exploration progresses the remaining improvement (hypervolume gain obtained by a new observation) decreases.
@@ -746,11 +756,11 @@ here a regular $21 \times 21$ grid.
 x.grid <- seq(0, 1, length.out = 21)
 test.grid <- expand.grid(x.grid, x.grid)
 SURcontrol <- list(integration.points = test.grid)
-omEGO1 <- crit_optimizer(crit = "SUR", model = model,  
-                         lower = c(0, 0), upper = c(1, 1),
-                         optimcontrol = list(method = "genoud", pop.size = 20,
-                                             int.seed = 2, unif.seed = 3),
-                         critcontrol = list(SURcontrol = SURcontrol))
+omEGO1 <- crit_optimizer(crit = "SUR", model = model,  lower = c(0, 0),
+  upper = c(1, 1), critcontrol = list(SURcontrol = SURcontrol),
+  optimcontrol = list(method = "genoud", pop.size = 20, 
+  int.seed = 2, unif.seed = 3)
+  )
 @
 
 Now, let us assume that $f_2$ is considerably faster to evaluate than $f_1$.
@@ -770,7 +780,7 @@ omEGO2 <- crit_optimizer(crit="SUR", model=model2,  lower=c(0,0), upper=c(1,1),
 @
 
 <<echo=FALSE,message=FALSE,warning=FALSE, results='hide'>>=
-library("KrigInv", quietly = TRUE)
+suppressPackageStartupMessages(library("KrigInv", quietly = T))
 n.grid <- 21
 x.grid <- seq(0, 1, length.out=n.grid)
 
@@ -843,18 +853,15 @@ filled.contour(x.grid, x.grid,
 Now, we apply ten steps of SUR, first with two regular objectives, then with the \texttt{fastfun} setting:
 <<UQ_opt1, message = FALSE, warning=FALSE, results='hide', fig.show='hide'>>=
 sol <- GParetoptim(model = model, fn = fun, crit = "SUR", nsteps = 7,
-                   lower = c(0, 0), upper = c(1, 1), 
-                   optimcontrol = list(method = "pso"),
-                   critcontrol = list(SURcontrol = list(distrib = "SUR",
-                                                        n.points = 50)))
+  lower = c(0, 0), upper = c(1, 1), optimcontrol = list(method = "pso"),
+  critcontrol = list(SURcontrol = list(distrib = "SUR", n.points = 50)))
 @
 
 <<UQ_opt2, message=FALSE, warning=FALSE, results='hide', fig.show='hide'>>=
-solFast <- GParetoptim(model = list(mf1), fn = fun1, cheapfn = fun2,
-                   crit = "SUR", nsteps = 7, lower = c(0, 0), upper = c(1, 1),
-                   optimcontrol = list(method = "pso"),
-                   critcontrol = list(SURcontrol = list(distrib = "SUR",
-                                                    n.points = 50)))
+solFast <- GParetoptim(model = list(mf1), fn = fun1, cheapfn = fun2, 
+  crit = "SUR", nsteps = 7, lower = c(0, 0), upper = c(1, 1),
+  optimcontrol = list(method = "pso"),
+  critcontrol = list(SURcontrol = list(distrib = "SUR", n.points = 50)))
 @
 
 
@@ -879,7 +886,7 @@ the Pareto front obtained this way is much more accurate (Figure \ref{fig:ex3}, 
 Interestingly, the two Vorob'ev expectations are similar, and provide a very good prediction of
 the actual Pareto front (Figure \ref{fig:P1}), except for the lowest values of the first objective. 
 However, the Vorob'ev deviations (grey areas) show a higher local uncertainty for this part of the front.
-Overall the Vorob'ev deviation values (368 and 296, resp.\@) indicate a substantially better confidence on the predicted Pareto front
+Overall the Vorob'ev deviation values (356 and 293, resp.\@) indicate a substantially better confidence on the predicted Pareto front
 using \texttt{fastfun}.
 
 The probability and density plots (Figure \ref{fig:ex3}, second and third rows, respectively) provide complementary information on the Pareto set (input space). The probability plots indicate interesting (white) and uninteresting (black) regions, as well as uncertain ones (gray), but do not provide a clear insight on the Pareto set. Here, on both cases, the large gray areas show that additional observations may be beneficial, which is consistent with the large difference between the current Pareto front and the Vorob'ev expectation (Figure \ref{fig:ex3}, top).
@@ -923,11 +930,11 @@ To this end, the \texttt{getDesign} function returns the most probable design gi
 and can be called as follow:
 <<warning=FALSE, message=FALSE>>=
 newPoint <- getDesign(model = sol$lastmodel, target = c(42, -26),
-                      lower=c(0, 0), upper=c(1, 1))
+  lower = c(0, 0), upper = c(1, 1), optimcontrol = list(method = "pso"))
 newPoint
 @
 
-Here, we have chosen a target $[42,-26]$ that is on the Vorob'ev expectation, where the uncertainty is small but where no observation is near (Figure \ref{fig:ex3}, top left). The \texttt{getDesign} output is a list with the value of the design (\texttt{par}), the value of the criterion, i.e., the probability that the \texttt{newPoint} objective is not dominated by the target) (\texttt{value}, here 50\%) and the GP prediction of each objective with the associated uncertainty ((\texttt{mean}), (\texttt{sd}) and confidence intervals). Here, the value of the second objective reaches the target with large confidence, but the first objective value is quite uncertain.
+Here, we have chosen a target $[42,-26]$ that is on the Vorob'ev expectation, where the uncertainty is small but where no observation is near (Figure \ref{fig:ex3}, top left). The \texttt{getDesign} output is a list with the value of the design (\texttt{par}), the value of the criterion, i.e., the probability that the \texttt{newPoint} objective is not dominated by the target) (\texttt{value}, here 60\%) and the GP prediction of each objective with the associated uncertainty ((\texttt{mean}), (\texttt{sd}) and confidence intervals). Here, the value of the second objective reaches the target with large confidence, but the first objective value is quite uncertain.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -945,8 +952,8 @@ This time we simply use \texttt{easyGParetoptim} to solve the problem without ha
 
 
 <<echo=TRUE,message=FALSE,warning=FALSE, results='hide'>>=
-res <- easyGParetoptim(fn = DTLZ2, budget = 50,
-                       lower = rep(0, 4), upper = rep(1, 4), control = list(maxit = 40))
+res <- easyGParetoptim(fn = DTLZ2, budget = 50, lower = rep(0, 4), 
+  upper = rep(1, 4), control = list(maxit = 20))
 @
 
   
@@ -956,9 +963,9 @@ For the latter, we changed the grid size parameter(\texttt{resolution}) and the 
 of integration points (\texttt{nintegpoints}) to avoid overly costly figures. 
 
 <<ex3DPS, fig.show='hide',fig.width=c(5,6), fig.height=c(5,6)>>=
-plotGPareto(res, UQ_PS = TRUE,
-            control = list(lower = rep(0, 4), upper = rep(1, 4), option = "mean",
-                           resolution = 25, nintegpoints = 100))
+plotGPareto(res, UQ_PS = TRUE, control = list(lower = rep(0, 4),
+  upper = rep(1, 4), nintegpoints = 100, option = "mean",
+  resolution = 25))
 @
 
 The graphical outputs are shown in Figure \ref{fig:DTLZ2}.

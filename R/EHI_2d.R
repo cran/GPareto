@@ -60,8 +60,7 @@ EHI_2d <- function(x, model, critcontrol=NULL, type = "UK", paretoFront = NULL){
   x.new <- matrix(x, 1, d)
   
   if(is.null(paretoFront) || is.null(critcontrol$refPoint)){
-    observations <- matrix(0, model[[1]]@n, n.obj)
-    for (i in 1:n.obj) observations[,i] <- model[[i]]@y
+    observations <- Reduce(cbind, lapply(model, slot, "y"))
     if(is.null(paretoFront))
       paretoFront <- t(nondominated_points(t(observations)))
   }
@@ -72,25 +71,31 @@ EHI_2d <- function(x, model, critcontrol=NULL, type = "UK", paretoFront = NULL){
   
   refPoint <- critcontrol$refPoint
   if (is.null(refPoint)){
-    refPoint <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj) ### May be changed? 
+    if(is.null(critcontrol$extendper)) critcontrol$extendper <- 0.2
+    # refPoint    <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj)
+    PF_range <- apply(paretoFront, 2, range)
+    refPoint <- matrix(PF_range[2,] + pmax(1, (PF_range[2,] - PF_range[1,]) * critcontrol$extendper), 1, n.obj)
     cat("No refPoint provided, ", signif(refPoint, 3), "used \n")
-  } 
+  }
   
   if (n.obj!=2){
     print("Analytical hypervolume EI only works with 2 objectives")
     return(NULL)
   } else {
     
-    mu    <- rep(NaN, n.obj)
-    sigma <- rep(NaN, n.obj)
-    for (i in 1:n.obj){    
-      pred     <- predict(object=model[[i]], newdata=x.new, type=type, checkNames = FALSE, light.return = TRUE)
-      mu[i]    <- pred$mean
-      sigma[i] <- pred$sd
-    }
+    # mu    <- rep(NaN, n.obj)
+    # sigma <- rep(NaN, n.obj)
+    # for (i in 1:n.obj){    
+    #   pred     <- predict(object=model[[i]], newdata=x.new, type=type, checkNames = FALSE, light.return = TRUE, cov.compute = FALSE)
+    #   mu[i]    <- pred$mean
+    #   sigma[i] <- pred$sd
+    # }
+    pred <- predict_kms(model, newdata=x.new, type=type, checkNames = FALSE, light.return = TRUE, cov.compute = FALSE)
+    mu <- as.numeric(pred$mean)
+    sigma <- as.numeric(pred$sd)
     
     ## A new x too close to the known observations could result in numerical problems
-  
+    
     if(checkPredict(x, model, type = type, distance = critcontrol$distance, threshold = critcontrol$threshold)){
       return(-1)
     }else{
@@ -98,3 +103,4 @@ EHI_2d <- function(x, model, critcontrol=NULL, type = "UK", paretoFront = NULL){
     }
   }
 }
+

@@ -136,22 +136,29 @@ getDesign <- function(model, target, lower, upper, optimcontrol = NULL){
   } 
   
   # Prediction at this best design
-  tmp <- lapply(model, predict, newdata = par, type = "UK",
-                light.return = TRUE, checkNames = F)
+  # tmp <- lapply(model, predict, newdata = par, type = "UK",
+  #               light.return = TRUE, checkNames = F, cov.compute = FALSE)
   
-  tmp <- matrix(unlist(tmp), ncol=5, byrow=TRUE)
+  # tmp <- matrix(unlist(tmp), ncol=5, byrow=TRUE)
   
-  return(list(par=par, value=value, mean = tmp[,2], sd = tmp[,3])) #,
-              #lower95 = tmp[,4], upper95 = tmp[,5]))
+  pred <- predict_kms(model, newdata=par, type="UK", checkNames = FALSE, light.return = TRUE, cov.compute = FALSE)
+  # mu <- as.numeric(pred$mean)
+  # sigma <- as.numeric(pred$sd)
+  return(list(par=par, value=value, mean = pred$mean, sd = pred$sd))
+  # return(list(par=par, value=value, mean = tmp[,2], sd = tmp[,3])) #,
+  #lower95 = tmp[,4], upper95 = tmp[,5]))
 }
 
 prob.of.dominating <- function(X, model, target){
-  tmp <- lapply(model, predict, newdata = data.frame(t(X)), type = "UK",
-                light.return = TRUE, checkNames = F)
-  prob <- prod(mapply(univariateProb, list = tmp, target = target))
+  # tmp <- lapply(model, predict, newdata = data.frame(t(X)), type = "UK",
+  #               light.return = TRUE, checkNames = F, cov.compute = FALSE)
+  
+  pred <- predict_kms(model, newdata=data.frame(t(X)), type="UK", checkNames = FALSE, light.return = TRUE, cov.compute = FALSE)
+  # prob <- prod(mapply(univariateProb, list = pred, target = target))
+  prob <- prod(pnorm(q = target, mean = pred$mean, sd = pred$sd))
   return(prob)
 }
 
-univariateProb <- function(list, target){
-  return(pnorm(q = target, mean = list$mean, sd = list$sd))
-}
+# univariateProb <- function(list, target){
+#   return(pnorm(q = target, mean = list$mean, sd = list$sd))
+# }

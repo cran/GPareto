@@ -35,4 +35,3 @@ plotSymDifRNP(set1, set2, xlim = c(0, 1), ylim = c(0, 1), fill = "grey")
 points(t(set1), col = "red", pch = 20)
 points(t(set2), col = "blue", pch = 20)
 }
-

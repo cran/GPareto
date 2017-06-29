@@ -39,7 +39,9 @@ be usable for SUR-based optimization. Handles two or three objectives.
 Available important sampling schemes: none so far.
 }
 \details{
-Options for the \code{SURcontrol} list are :
+The \code{SURcontrol} argument is a list with possible entries \code{integration.points}, \code{integration.weights}, \code{n.points},
+\code{n.candidates}, \code{distrib}, \code{init.distrib} and \code{init.distrib.spec}. It can be used 
+in one of the three following ways:
 \itemize{
   \item A) If nothing is specified, \code{100 * d} points are chosen using the Sobol sequence;
   \item B) One can directly set the field \code{integration.points} (\code{p * d} matrix) for prespecified integration points. 
@@ -69,4 +71,3 @@ V. Picheny (2014), Multiobjective optimization using Gaussian process emulators 
 \seealso{
 \code{\link[GPareto]{GParetoptim}} \code{\link[GPareto]{crit_SUR}} \code{\link[KrigInv]{integration_design}}
 }
-

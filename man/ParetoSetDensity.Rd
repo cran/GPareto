@@ -35,7 +35,7 @@ estimated density of Pareto optimal points.
 Estimation of the density of Pareto optimal points in the variable space.
 }
 \details{
-This functino estimates the density of Pareto optimal points in the variable space
+This function estimates the density of Pareto optimal points in the variable space
 given by the surrogate models. Based on conditional simulations of the objectives at simulation points,
 Conditional Pareto Set (CPS) simulations are obtained, out of which a density is fitted. 
  
@@ -55,15 +55,14 @@ upper <- rep(1, n_var)
 res1 <- easyGParetoptim(fn = fname, lower = lower, upper = upper, budget = 15, 
 control=list(method = "EHI", inneroptim = "pso", maxit = 20))
 
-estDens <- ParetoSetDensity(res1$history$model, lower = lower, upper = upper)
+estDens <- ParetoSetDensity(res1$model, lower = lower, upper = upper)
 
 # graphics
 par(mfrow = c(1,2))
 plot(estDens, display = "persp", xlab = "X1", ylab = "X2")
 plot(estDens, display = "filled.contour2", main = "Estimated density of Pareto optimal point")
-points(res1$history$model[[1]]@X[,1], res1$history$model[[2]]@X[,2], col="blue")
+points(res1$model[[1]]@X[,1], res1$model[[2]]@X[,2], col="blue")
 points(estDens$x[, 1], estDens$x[, 2], pch = 20, col = rgb(0, 0, 0, 0.15))
 par(mfrow = c(1,1))
 }
 }
-

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fastfun.R
 \name{fastfun}
 \alias{fastfun}
-\title{Fastfun function}
+\title{Fast-to-evaluate function wrapper}
 \usage{
 fastfun(fn, design, response = NULL)
 }
@@ -18,7 +18,7 @@ The ith row contains the values of the d input variables corresponding to the it
 An object of class  \code{\link[GPareto]{fastfun-class}}.
 }
 \description{
-Modification of an R function to be used as with methods \code{predict} and \code{update} (similar to a \code{\link[DiceKriging]{km}} object). 
+Modification of an R function to be used with methods \code{predict} and \code{update} (similar to a \code{\link[DiceKriging]{km}} object). 
 It creates an S4 object which contains the values corresponding to evaluations of other costly observations.
 It is useful when an objective can be evaluated fast.
 }
@@ -85,4 +85,3 @@ print(omEGO2$values)
 points(omEGO2$values, col = "red", pch = 15)
 }
 }
-

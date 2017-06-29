@@ -69,10 +69,10 @@ plotSymDevFun <- function(CPF, n.grid = 100){
                  xlab=expression(f[1]),ylab=expression(f[2]),
                  
                  plot.axes={axis(1);axis(2);  
-                            points(CPF$responses[,1], CPF$responses[,2], pch = 17, 
-                                   col = "red")
-                            plotParetoEmp(CPF$VE, col="blue", lwd=2)
-                            plotParetoEmp(CPF$PF, col="red", lwd=2);
+                   points(CPF$responses[,1], CPF$responses[,2], pch = 17, 
+                          col = "red")
+                   plotParetoEmp(CPF$VE, col="blue", lwd=2)
+                   plotParetoEmp(CPF$PF, col="red", lwd=2);
                  }
   )
 }

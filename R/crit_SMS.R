@@ -1,13 +1,16 @@
-##' Computes a slightly modified infill Criterion of the SMS-EGO.
+##' Computes a slightly modified infill Criterion of the SMS-EGO. 
 ##' To avoid numerical instabilities, an additional penalty is added to the new point if it is too close to an existing observation.
 ##' @title Analytical expression of the SMS-EGO criterion with m>1 objectives
 ##' @param x a vector representing the input for which one wishes to calculate the criterion,
 ##' @param model a list of objects of class \code{\link[DiceKriging]{km}} (one for each objective),
-##' @param paretoFront (optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]}, 
+##' @param paretoFront (optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]}, or any reference set of observations,  
 ##' @param critcontrol list with arguments: 
 ##' \itemize{
 ##' \item \code{currentHV} current hypervolume;
 ##' \item \code{refPoint} reference point for hypervolume computations;
+##' \item \code{extendper} if no reference point \code{refPoint} is provided,
+##'  for each objective it is fixed to the maximum over the Pareto front plus extendper times the range. 
+##'  Default value to \code{0.2}, corresponding to \code{1.1} for a scaled objective with a Pareto front in \code{[0,1]^n.obj};
 ##' \item \code{epsilon} optional value to use in additive epsilon dominance;
 ##' \item \code{gain} optional gain factor for sigma.
 ##' }
@@ -54,20 +57,8 @@
 ##'               )
 ##' @export
 
-crit_SMS <- function(x, model, paretoFront=NULL, critcontrol=list(epsilon=1e-6, gain=1), type="UK")
+crit_SMS <- function(x, model, paretoFront=NULL, critcontrol=NULL, type="UK")
 {
-  # Slightly modified infill Criterion of the SMSEGO
-  # Ponweiser, Wagner et al. (Proc. 2008 PPSN, pp. 784-794)
-  # ***********************************************************************
-  # arguments
-  # x:             decision vector to be evaluated
-  # model:         d-dimensional cell array of models for each objective
-  # ref:           d-dimensional anti-ideal reference point
-  # paretoFront:   current Pareto front approximation
-  # currentHV:     hypervolume of current front with respect to ref
-  # epsilon:       epsilon to use in additive epsilon dominance
-  # gain:          gain factor for sigma (optional)
-  
   n.obj <- length(model)
   d <- model[[1]]@d
   x.new <- matrix(x, 1, d)
@@ -83,29 +74,46 @@ crit_SMS <- function(x, model, paretoFront=NULL, critcontrol=list(epsilon=1e-6, 
   currentHV <- critcontrol$currentHV
   epsilon   <- critcontrol$epsilon
   gain      <- critcontrol$gain
+  nsteps.remaining <- critcontrol$nsteps.remaining
   
   if(is.null(paretoFront) || is.null(refPoint)) {
-    observations <- matrix(0, model[[1]]@n, n.obj)
-    for (i in 1:n.obj) observations[,i] <- model[[i]]@y
+    observations <- Reduce(cbind, lapply(model, slot, "y"))
   }
   if(is.null(paretoFront)) paretoFront <- t(nondominated_points(t(observations)))
   if (is.null(refPoint)){
-    refPoint    <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj)
+    if(is.null(critcontrol$extendper)) critcontrol$extendper <- 0.2
+    # refPoint    <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj)
+    PF_range <- apply(paretoFront, 2, range)
+    refPoint <- matrix(PF_range[2,] + pmax(1, (PF_range[2,] - PF_range[1,]) * critcontrol$extendper), 1, n.obj)
     cat("No refPoint provided, ", signif(refPoint, 3), "used \n")
   }
-  
-  if (is.null(currentHV)) currentHV <- dominated_hypervolume(points=t(paretoFront), ref=refPoint)
-  if (is.null(epsilon))   epsilon <- 1e-6
-  if (is.null(gain))      gain <- 1
   n.pareto <- nrow(paretoFront)
   
-  mu    <- rep(NaN, n.obj)
-  sigma <- rep(NaN, n.obj)
-  for (i in 1:n.obj){    
-    pred     <- predict(object=model[[i]], newdata=x.new, type=type, checkNames = FALSE)
-    mu[i]    <- pred$mean
-    sigma[i] <- pred$sd
+  if (is.null(currentHV)) currentHV <- dominated_hypervolume(points=t(paretoFront), ref=refPoint)
+  if (is.null(nsteps.remaining)) nsteps.remaining <- 1
+  if (is.null(gain))  gain <- -qnorm( 0.5*(0.5^(1/n.obj)) )
+  
+  if (is.null(epsilon)) {
+    if (n.pareto < 2){
+      epsilon <- rep(0, n.obj)
+    } else {
+      spread <- apply(paretoFront,2,max) - apply(paretoFront,2,min)
+      c <- 1 - (1 / (2^n.obj) )
+      epsilon <- spread / (n.pareto + c * (nsteps.remaining-1))
+    }
   }
+  
+  # mu    <- rep(NaN, n.obj)
+  # sigma <- rep(NaN, n.obj)
+  # for (i in 1:n.obj){    
+  #   pred     <- predict(object=model[[i]], newdata=x.new, type=type, checkNames = FALSE, light.return = TRUE, cov.compute = FALSE)
+  #   mu[i]    <- pred$mean
+  #   sigma[i] <- pred$sd
+  # }
+  pred <- predict_kms(model, newdata=x.new, type=type, checkNames = FALSE, light.return = TRUE, cov.compute = FALSE)
+  mu <- as.numeric(pred$mean)
+  sigma <- as.numeric(pred$sd)
+  
   potSol <- mu - gain*sigma
   penalty <- distp
   for (j in 1:n.pareto){

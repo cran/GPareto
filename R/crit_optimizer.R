@@ -17,23 +17,28 @@
 ##' @param upper vector of upper bounds for the variables to be optimized over,
 ##' @param cheapfn optional additional fast-to-evaluate objective function (handled next with class \code{\link[GPareto]{fastfun}}), which does not need a kriging model,
 ##' @param type "\code{SK}" or "\code{UK}" (default), depending whether uncertainty related to trend estimation has to be taken into account.
-##' @param paretoFront (optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]}, 
+##' @param paretoFront (optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]}, or any reference set of observations,  
 ##' @param critcontrol optional list of control parameters for criterion \code{crit}, see details.
-##' Options for the \code{\link[GPareto]{checkPredict}} function: \code{threshold} (\code{1e-4}) and \code{distance} (\code{covdist}) are used to avoid numerical issues occuring when adding points too close to the existing ones.
+##' Options for the \code{\link[GPareto]{checkPredict}} function: \code{threshold} (\code{1e-4}) and \code{distance} (\code{covdist}) are used to avoid numerical issues 
+##' occuring when adding points too close to the existing ones.
 ##' @param optimcontrol optional list of control parameters for optimization of the selected infill criterion. 
 ##'       "\code{method}" set the optimization method; one can 
-##'        choose between "\code{discrete}", "\code{pso}" and "\code{genoud}" or a user defined method name (passed to \code{\link[base]{match.fun}}). For each method, further parameters can be set.\cr 
+##'        choose between "\code{discrete}", "\code{pso}" and "\code{genoud}" or a user defined method name (passed to \code{\link[base]{match.fun}}). 
+##'        For each method, further parameters can be set.\cr 
 ##'        For "\code{discrete}", one has to provide the argument "\code{candidate.points}". \cr
 ##'        For "\code{pso}", one can control the maximum number of iterations "\code{maxit}" (\code{400}) and the population size "\code{s}"
 ##'        (default :  \code{max(20, floor(10+2*sqrt(length(dim))))} (see \code{\link[pso]{psoptim}}). \cr
 ##'        For "\code{genoud}", one can control, among others, "\code{pop.size}" (default :  \code{[N = 3*2^dim} for \code{dim < 6} and  \code{N = 32*dim} otherwise]),
-##' "\code{max.generations}" (\code{12}), "\code{wait.generations}" (\code{2}), "\code{BFGSburnin}" (\code{2}), \code{BFGSmaxit} (\code{N}) and \code{solution.tolerance} (\code{1e-21})
+##' "\code{max.generations}" (\code{12}), "\code{wait.generations}" (\code{2}), "\code{BFGSburnin}" (\code{2}), \code{BFGSmaxit} (\code{N}) and 
+##' \code{solution.tolerance} (\code{1e-21})
 ##'  of function "\code{genoud}" (see \code{\link[rgenoud]{genoud}}). Numbers into brackets are the default values.\cr
-##'  For a user defined method, it must have arguments like the default \code{\link[stats]{optim}} method, i.e. \code{par}, \code{fn}, \code{lower}, \code{upper}, \code{...} and eventually \code{control}, and return a list with \code{par} and \code{value}.
-##' @param nsteps.remaining Number of iterations remaining in the optimization loop. 
-##'        Used by "\code{SMS}" to determine the parameter epsilon.
+##'  For a user defined method, it must have arguments like the default \code{\link[stats]{optim}} method, i.e. \code{par}, \code{fn}, \code{lower}, \code{upper}, \code{...} 
+##'  and possibly \code{control}, 
+##'  and return a list with \code{par} and \code{value}.
+##'  A trace \code{trace} argument is available, it can be set to \code{0} to suppress all messages, to \code{1} (default) for displaying the optimization progresses,
+##'  and \code{>1} for the highest level of details.
 ##'        
-##' @return A list with components:  
+##' @return A list with components: 
 ##'  \itemize{
 ##'  \item{\code{par}}{: The best set of parameters found,}
 ##'  \item{\code{value}}{: The value of expected improvement at \code{par}.}
@@ -48,15 +53,18 @@
 ##' \item Expected Maximin Improvement (\code{EMI}) \code{\link[GPareto]{crit_EMI}},
 ##' \item Stepwise Uncertainty Reduction of the excursion volume (\code{SUR}) \code{\link[GPareto]{crit_SUR}}
 ##' }
-##' Depending on the selected criterion, parameters such as a reference point for \code{SMS} and \code{EHI} or arguments for \code{\link[GPareto]{integration_design_optim}} with \code{SUR} can be given with \code{critcontrol}.
+##' Depending on the selected criterion, parameters such as a reference point for \code{SMS} and \code{EHI} or arguments for 
+##' \code{\link[GPareto]{integration_design_optim}} with \code{SUR} can be given with \code{critcontrol}.
 ##' Also options for \code{\link[GPareto]{checkPredict}} are available.
 ##' More precisions are given in the corresponding help pages. 
 ##' @importFrom pso psoptim
 ##' @importFrom KrigInv precomputeUpdateData
 ##' @references
-##' W.R. Jr. Mebane and J.S. Sekhon (2011), Genetic optimization using derivatives: The rgenoud package for R, \emph{Journal of Statistical Software}, 42(11), 1-26 \cr
+##' W.R. Jr. Mebane and J.S. Sekhon (2011), Genetic optimization using derivatives: The rgenoud package for R, 
+##' \emph{Journal of Statistical Software}, 42(11), 1-26 \cr
 ##' 
-##' D.R. Jones, M. Schonlau, and W.J. Welch (1998), Efficient global optimization of expensive black-box functions, \emph{Journal of Global Optimization}, 13, 455-492.
+##' D.R. Jones, M. Schonlau, and W.J. Welch (1998), Efficient global optimization of expensive black-box functions, 
+##' \emph{Journal of Global Optimization}, 13, 455-492.
 ##' @examples
 ##' \dontrun{
 ##' #---------------------------------------------------------------------------
@@ -236,11 +244,13 @@
 ##' @export
 
 crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfn = NULL, type = "UK", paretoFront = NULL, 
-                        critcontrol = NULL, optimcontrol = NULL, nsteps.remaining = 1){
+                           critcontrol = NULL, optimcontrol = NULL){
   ###########################################################################################
   # Finds the maximizer of the criterion
   ###########################################################################################
   if(is.null(optimcontrol$method)) optimcontrol$method <- "genoud"
+  if(is.null(optimcontrol$trace)) optimcontrol$trace <- 1
+  if(is.null(critcontrol$refPoint) && is.null(critcontrol$extendper)) critcontrol$extendper <- 0.2
   
   if (!is.null(cheapfn)) {
     fastobs <- apply(model[[1]]@X, 1, cheapfn)
@@ -250,26 +260,26 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfn = NULL, ty
   
   d     <- model[[1]]@d
   n.obj <- length(model)
-
   
-  #if (is.null(observations)) {
-  observations <- matrix(0, model[[1]]@n, n.obj)
-  for (i in 1:n.obj) observations[,i] <- model[[i]]@y
-  #}
-  
-  if (is.null(paretoFront)) paretoFront <- t(nondominated_points(t(observations)))
+  if (is.null(paretoFront)){
+    observations <- Reduce(cbind, lapply(model, slot, "y"))
+    paretoFront <- t(nondominated_points(t(observations)))
+  } 
   n.pareto <- nrow(paretoFront)
   if(is.null(critcontrol)) 
     critcontrol <- list()
   
   
   if (is.null(critcontrol$refPoint)){    
-    critcontrol$refPoint <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj) ### May be changed
-    if(crit == "SMS" | crit =="EHI")
+    # critcontrol$refPoint <- matrix(apply(paretoFront, 2, max) + 1, 1, n.obj) ### May be changed
+    PF_range <- apply(paretoFront, 2, range)
+    critcontrol$refPoint <- matrix(PF_range[2,] + pmax(1, (PF_range[2,] - PF_range[1,]) * critcontrol$extendper), 1, n.obj)
+    if(optimcontrol$trace > 0 & (crit == "SMS" | crit =="EHI"))
       cat("No refPoint provided, ", signif(critcontrol$refPoint, 3), "used \n")
   } 
   # Different calls for crit_optimizer, depending on the criterion chosen
   if (crit=="SMS"){
+    if (!is.null(critcontrol$nsteps.remaining)) nsteps.remaining <- critcontrol$nsteps.remaining else nsteps.remaining <- 1
     #-------------------------------------------------------
     currentHV <- dominated_hypervolume(points=t(paretoFront), ref=critcontrol$refPoint)
     if (n.pareto < 2){
@@ -300,36 +310,61 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfn = NULL, ty
     #-------------------------------------------------------
   } else if (crit=="SUR"){
     
-    ## if values for critcontrol are not provided correctly (integration.points,mn.X,...)
+    ## if values for critcontrol are not provided correctly: 
+    ## (integration.points, integration.weights, mn.X, sn.X, precalc.data)
     ## -> integration_design_optim is applied
+    diff_critcontrol <- setdiff(c("integration.points", "integration.weights", "mn.X", "sn.X", "precalc.data"), names(critcontrol))
     
-    if(is.null(critcontrol$integration.points)){
-      integration.param   <- integration_design_optim(critcontrol$SURcontrol, d, lower, upper, model=model)
+    if (length(diff_critcontrol) > 0) {
+      # Re-format integration.points and integration.weights if needed
+      integration.param   <- integration_design_optim(SURcontrol=critcontrol, d=d, lower=lower, upper=upper, model=model)
       integration.points  <- as.matrix(integration.param$integration.points)
-      integration.weights  <- integration.param$integration.weights
+      integration.weights <- integration.param$integration.weights
       
-      precalc.data <- vector("list", n.obj)
-      intpoints.oldmean <- intpoints.oldsd <- matrix(0, n.obj, nrow(integration.points))
-      
-      for (i in 1:n.obj){
-        p.tst <- predict(model[[i]], newdata=integration.points, type=type, checkNames=FALSE)
-        intpoints.oldmean[i,] <- p.tst$mean
-        intpoints.oldsd[i,]   <- p.tst$sd
-        if (max(intpoints.oldsd[i,]) != 0) precalc.data[[i]]     <- precomputeUpdateData(model[[i]], integration.points)
+      # Re-do precomputations if something is missing
+      if (is.null(critcontrol$mn.X) || is.null(critcontrol$sn.X) || is.null(critcontrol$precalc.data)) {
+        precalc.data <- vector("list", n.obj)
+        # intpoints.oldmean <- intpoints.oldsd <- matrix(0, n.obj, nrow(integration.points))
+        
+        # pred <- lapply(model, FUN=predict, newdata=integration.points, checkNames=FALSE, type=type, cov.compute = FALSE, light.return = TRUE)
+        # intpoints.oldmean <- t(Reduce(cbind, lapply(pred, function(alist) alist$mean)))
+        # intpoints.oldsd <- t(Reduce(cbind, lapply(pred, function(alist) alist$sd)))
+        pred <- predict_kms(model, newdata=integration.points, checkNames=FALSE, type=type, cov.compute = FALSE, light.return = TRUE)
+        intpoints.oldmean <- pred$mean
+        intpoints.oldsd <- pred$sd
+        
+        # Remove already visited points
+        I <- which(intpoints.oldsd[1,] < sqrt(model[[1]]@covariance@sd2)/1e4)
+        if (length(I) > 0){
+          integration.points  <- integration.points[-I,,drop=FALSE]
+          integration.weights <- integration.weights[-I]
+          intpoints.oldmean   <- intpoints.oldmean[,-I, drop=FALSE]
+          intpoints.oldsd     <- intpoints.oldsd[,-I, drop=FALSE]
+        }
+        
+        wrapped_precomputeUpdateData <- function(model, integration.points){
+          if(class(model) != "km") return(NULL)
+          else return(precomputeUpdateData(model, integration.points))
+        }
+        precalc.data <- lapply(model, FUN=wrapped_precomputeUpdateData, integration.points=integration.points)
+        
+        # Update critcontrol
+        critcontrol$integration.points <- integration.points
+        critcontrol$integration.weights <- integration.weights
+        critcontrol$mn.X <- intpoints.oldmean
+        critcontrol$sn.X <- intpoints.oldsd
+        critcontrol$precalc.data <- precalc.data
       }
-      
-      critcontrol <- c(critcontrol, list(integration.points=integration.points, integration.weights=integration.param$integration.weights,
-                                         mn.X=intpoints.oldmean, sn.X=intpoints.oldsd, precalc.data=precalc.data))
     }
-
     
     ## Reorder current Pareto front if needed
     if (n.obj==2){ if (is.unsorted(paretoFront[,1]))  paretoFront <- paretoFront[sort(paretoFront[,1], index.return=TRUE)[[2]],,drop=FALSE]
-    } else {       if (is.unsorted(-paretoFront[,3])) paretoFront <- paretoFront[sort(paretoFront[,3], index.return=TRUE, decreasing=TRUE)[[2]],,drop=FALSE]
+    } else {       if (is.unsorted(-paretoFront[,3])) paretoFront <- paretoFront[sort(paretoFront[,3], index.return=TRUE, decreasing=TRUE)[[2]],
+                                                                                 ,drop=FALSE]
     }
-
+    
     criterion <- crit_SUR
-
+    
     #-------------------------------------------------------
   }
   
@@ -340,26 +375,9 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfn = NULL, ty
   if(optimcontrol$method=="discrete"){
     optim.points <- optimcontrol$candidate.points
     colnames(optim.points) <- colnames(model[[1]]@X)
-    n.optim.points <- nrow(optim.points)
-    all.crit <- rep(0, n.optim.points)
-    critcontroldiscrete <- critcontrol
     
-    for (k in 1:n.optim.points){
-      if (crit=="SUR"){
-        critcontroldiscrete$integration.points <- critcontrol$integration.points[-k,,drop=FALSE]
-        if (!is.null(critcontroldiscrete$integration.weights)) critcontroldiscrete$integration.weights <- critcontrol$integration.weights[-k]
-        critcontroldiscrete$mn.X <- critcontrol$mn.X[,-k,drop=FALSE]
-        critcontroldiscrete$sn.X <- critcontrol$sn.X[,-k,drop=FALSE]
-        for (i in 1:n.obj){
-          if (!is.null(precalc.data[[i]])) {
-          critcontroldiscrete$precalc.data[[i]]$Kinv.c.olddata <- critcontrol$precalc.data[[i]]$Kinv.c.olddata[,-k,drop=FALSE]
-          critcontroldiscrete$precalc.data[[i]]$first.member   <- critcontrol$precalc.data[[i]]$first.member[-k]
-          }
-        }
-      }
-      all.crit[k] <- criterion(x=as.numeric(optim.points[k,]), paretoFront=paretoFront, model=model, type=type,
-                               critcontrol=critcontroldiscrete)
-    }
+    all.crit <- apply(optim.points, 1, criterion, paretoFront=paretoFront, model=model, type=type,
+                      critcontrol=critcontrol)
     value <- max(all.crit)
     i.best <- which(all.crit==value)[sample.int(length(which(all.crit==value)), 1)]
     par <- matrix(optim.points[i.best,],nrow=1, ncol=model[[1]]@d)
@@ -397,25 +415,46 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfn = NULL, ty
     if (is.null(optimcontrol$P8)) optimcontrol$P8<-50
     if (is.null(optimcontrol$P9)) optimcontrol$P9<-0
     
-
+    
     domaine <- cbind(lower, upper)
     
-    o <- genoud(fn=criterion, nvars=d, max=TRUE, pop.size=optimcontrol$pop.size,
-                max.generations=optimcontrol$max.generations,wait.generations=optimcontrol$wait.generations,
-                hard.generation.limit=TRUE, starting.values=optimcontrol$parinit, MemoryMatrix=TRUE,
-                Domains=domaine, default.domains=10, solution.tolerance=optimcontrol$solution.tolerance,
-                boundary.enforcement=2, lexical=FALSE, gradient.check=FALSE, BFGS=TRUE,
-                data.type.int=FALSE, hessian=FALSE, unif.seed=optimcontrol$unif.seed, 
-                int.seed=optimcontrol$int.seed,print.level=optimcontrol$print.level, share.type=0, instance.number=0,
-                output.path="stdout", output.append=FALSE, project.path=NULL,
-                P1=optimcontrol$P1, P2=optimcontrol$P2, P3=optimcontrol$P3, 
-                P4=optimcontrol$P4, P5=optimcontrol$P5, P6=optimcontrol$P6,
-                P7=optimcontrol$P7, P8=optimcontrol$P8, P9=optimcontrol$P9,
-                P9mix=NULL, BFGSburnin=optimcontrol$BFGSburnin,BFGSfn=NULL, BFGShelp=NULL,
-                control = list(maxit = optimcontrol$BFGSmaxit),
-                cluster=FALSE, balance=FALSE, debug=FALSE,
-                model=model, type=type, paretoFront=paretoFront, 
-                critcontrol=critcontrol)
+    if(optimcontrol$trace < 2){
+      ## No warnings 
+      o <- suppressWarnings(genoud(fn=criterion, nvars=d, max=TRUE, pop.size=optimcontrol$pop.size,
+                                   max.generations=optimcontrol$max.generations,wait.generations=optimcontrol$wait.generations,
+                                   hard.generation.limit=TRUE, starting.values=optimcontrol$parinit, MemoryMatrix=TRUE,
+                                   Domains=domaine, default.domains=10, solution.tolerance=optimcontrol$solution.tolerance,
+                                   boundary.enforcement=2, lexical=FALSE, gradient.check=FALSE, BFGS=TRUE,
+                                   data.type.int=FALSE, hessian=FALSE, unif.seed=optimcontrol$unif.seed, 
+                                   int.seed=optimcontrol$int.seed,print.level=optimcontrol$print.level, share.type=0, instance.number=0,
+                                   output.path="stdout", output.append=FALSE, project.path=NULL,
+                                   P1=optimcontrol$P1, P2=optimcontrol$P2, P3=optimcontrol$P3, 
+                                   P4=optimcontrol$P4, P5=optimcontrol$P5, P6=optimcontrol$P6,
+                                   P7=optimcontrol$P7, P8=optimcontrol$P8, P9=optimcontrol$P9,
+                                   P9mix=NULL, BFGSburnin=optimcontrol$BFGSburnin,BFGSfn=NULL, BFGShelp=NULL,
+                                   control = list(maxit = optimcontrol$BFGSmaxit),
+                                   cluster=FALSE, balance=FALSE, debug=FALSE,
+                                   model=model, type=type, paretoFront=paretoFront, 
+                                   critcontrol=critcontrol))
+    }else{
+      o <- genoud(fn=criterion, nvars=d, max=TRUE, pop.size=optimcontrol$pop.size,
+                  max.generations=optimcontrol$max.generations,wait.generations=optimcontrol$wait.generations,
+                  hard.generation.limit=TRUE, starting.values=optimcontrol$parinit, MemoryMatrix=TRUE,
+                  Domains=domaine, default.domains=10, solution.tolerance=optimcontrol$solution.tolerance,
+                  boundary.enforcement=2, lexical=FALSE, gradient.check=FALSE, BFGS=TRUE,
+                  data.type.int=FALSE, hessian=FALSE, unif.seed=optimcontrol$unif.seed, 
+                  int.seed=optimcontrol$int.seed,print.level=optimcontrol$print.level, share.type=0, instance.number=0,
+                  output.path="stdout", output.append=FALSE, project.path=NULL,
+                  P1=optimcontrol$P1, P2=optimcontrol$P2, P3=optimcontrol$P3, 
+                  P4=optimcontrol$P4, P5=optimcontrol$P5, P6=optimcontrol$P6,
+                  P7=optimcontrol$P7, P8=optimcontrol$P8, P9=optimcontrol$P9,
+                  P9mix=NULL, BFGSburnin=optimcontrol$BFGSburnin,BFGSfn=NULL, BFGShelp=NULL,
+                  control = list(maxit = optimcontrol$BFGSmaxit),
+                  cluster=FALSE, balance=FALSE, debug=FALSE,
+                  model=model, type=type, paretoFront=paretoFront, 
+                  critcontrol=critcontrol)
+    }
+    
     
     par <- t(as.matrix(o$par))
     colnames(par) <- colnames(model[[1]]@X)
@@ -426,7 +465,6 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfn = NULL, ty
   ## Optimization with PSO
   ########################################################################################
   if(optimcontrol$method=="pso"){
-    
     control <- list(fnscale=-1, maxit=optimcontrol$maxit, s = optimcontrol$s)
     if (is.null(control$maxit))   control$maxit=400
     if (is.null(control$s)) control$s = max(floor(10+2*sqrt(d)), 20)

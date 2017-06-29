@@ -15,7 +15,7 @@
 ##' @return An object of class \code{\link[ks]{kde}} accounting for the 
 ##' estimated density of Pareto optimal points.
 ##' @details 
-##' This functino estimates the density of Pareto optimal points in the variable space
+##' This function estimates the density of Pareto optimal points in the variable space
 ##' given by the surrogate models. Based on conditional simulations of the objectives at simulation points,
 ##' Conditional Pareto Set (CPS) simulations are obtained, out of which a density is fitted. 
 ##'  
@@ -37,13 +37,13 @@
 ##' res1 <- easyGParetoptim(fn = fname, lower = lower, upper = upper, budget = 15, 
 ##' control=list(method = "EHI", inneroptim = "pso", maxit = 20))
 ##' 
-##' estDens <- ParetoSetDensity(res1$history$model, lower = lower, upper = upper)
+##' estDens <- ParetoSetDensity(res1$model, lower = lower, upper = upper)
 ##' 
 ##' # graphics
 ##' par(mfrow = c(1,2))
 ##' plot(estDens, display = "persp", xlab = "X1", ylab = "X2")
 ##' plot(estDens, display = "filled.contour2", main = "Estimated density of Pareto optimal point")
-##' points(res1$history$model[[1]]@@X[,1], res1$history$model[[2]]@@X[,2], col="blue")
+##' points(res1$model[[1]]@@X[,1], res1$model[[2]]@@X[,2], col="blue")
 ##' points(estDens$x[, 1], estDens$x[, 2], pch = 20, col = rgb(0, 0, 0, 0.15))
 ##' par(mfrow = c(1,1))
 ##' }
@@ -70,7 +70,7 @@ ParetoSetDensity <- function(model, lower, upper, CPS = NULL, nsim = 50, simpoin
       non_dom_order <- nds_rank(Simus[,i,])
       CPS <- rbind(simpoints[which(non_dom_order == 1),], CPS)
     }
-   }
+  }
   if(model[[1]]@d > 3 & !exists("eval.points")){
     fhat <- kde(x = CPS, xmin = lower, xmax = upper, eval.points = simpoints, ...)
   }else{

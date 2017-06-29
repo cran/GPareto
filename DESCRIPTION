@@ -1,14 +1,11 @@
 Package: GPareto
+Type: Package
 Title: Gaussian Processes for Pareto Front Estimation and Optimization
-Version: 1.0.3
-Date: 2016-11-09
+Version: 1.1.0
+Date: 2017-06-23
 Author: Mickael Binois, Victor Picheny
 Maintainer: Mickael Binois <mickael.binois@chicagobooth.edu>
-Description: Gaussian process regression models, a.k.a. Kriging models, are
-    applied to global multi-objective optimization of black-box functions.
-    Multi-objective Expected Improvement and Step-wise Uncertainty Reduction
-    sequential infill criteria are available. A quantification of uncertainty
-    on Pareto fronts is provided using conditional simulations.
+Description: Gaussian process regression models, a.k.a. Kriging models, are applied to global multi-objective optimization of black-box functions. Multi-objective Expected Improvement and Step-wise Uncertainty Reduction sequential infill criteria are available. A quantification of uncertainty on Pareto fronts is provided using conditional simulations.
 License: GPL-3
 Depends: DiceKriging (>= 1.5.3), emoa, methods
 Imports: Rcpp (>= 0.11.1), rgenoud, pbivnorm, pso, randtoolbox,
@@ -17,7 +14,7 @@ Suggests: knitr
 VignetteBuilder: knitr
 LinkingTo: Rcpp
 Repository: CRAN
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
 NeedsCompilation: yes
-Packaged: 2016-11-10 23:43:55 UTC; mickael
-Date/Publication: 2016-11-11 17:36:23
+Packaged: 2017-06-28 13:32:21 UTC; mickael
+Date/Publication: 2017-06-29 05:30:09 UTC

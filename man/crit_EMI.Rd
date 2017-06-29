@@ -4,17 +4,17 @@
 \alias{crit_EMI}
 \title{Expected Maximin Improvement with m objectives}
 \usage{
-crit_EMI(x, model, paretoFront = NULL, critcontrol = list(nb.samp = 100,
-  seed = 42), type = "UK")
+crit_EMI(x, model, paretoFront = NULL, critcontrol = list(nb.samp = 50, seed
+  = 42), type = "UK")
 }
 \arguments{
 \item{x}{a vector representing the input for which one wishes to calculate \code{EMI},}
 
 \item{model}{list of objects of class \code{\link[DiceKriging]{km}}, one for each objective functions,}
 
-\item{paretoFront}{(optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]},}
+\item{paretoFront}{(optional) matrix corresponding to the Pareto front of size \code{[n.pareto x n.obj]}, or any reference set of observations,}
 
-\item{critcontrol}{optional list with arguments: 
+\item{critcontrol}{optional list with arguments (for more than 2 objectives only): 
 \itemize{
 \item \code{nb.samp} number of random samples from the posterior distribution,
      default to \code{50}, increasing gives more reliable results at the cost of longer computation time;
@@ -30,10 +30,13 @@ The Expected Maximin Improvement at \code{x}.
 }
 \description{
 Expected Maximin Improvement with respect to the current Pareto front with Sample Average Approximation.
+The semi-analytical formula is used in the bi-objective scale if the Pareto front is in [-2,2]^2,
+for numerical stability reasons. 
 To avoid numerical instabilities, the new point is penalized if it is too close to an existing observation.
 }
 \details{
-It is recommanded to scale objectives, e.g. to \code{[0,1]}.
+It is recommanded to scale objectives, e.g. to \code{[0,1]}. 
+If the Pareto front does not belong to [-2,2]^2, then SAA is used.
 }
 \examples{
 #---------------------------------------------------------------------------
@@ -53,7 +56,7 @@ Front_Pareto <- t(nondominated_points(t(response.grid)))
 mf1 <- km(~., design = design.grid, response = response.grid[,1])
 mf2 <- km(~., design = design.grid, response = response.grid[,2])
 
-EMI_grid <- apply(test.grid, 1, crit_EMI, model = list(mf1, mf2),
+EMI_grid <- apply(test.grid, 1, crit_EMI, model = list(mf1, mf2), paretoFront = Front_Pareto,
                      critcontrol = list(nb_samp = 20))
 
 filled.contour(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid), nlevels = 50,
@@ -73,4 +76,3 @@ J. D. Svenson (2011), \emph{Computer Experiments: Multiobjective Optimization an
 \seealso{
 \code{\link[DiceOptim]{EI}} from package DiceOptim, \code{\link[GPareto]{crit_EHI}}, \code{\link[GPareto]{crit_SUR}}, \code{\link[GPareto]{crit_SMS}}.
 }
-
