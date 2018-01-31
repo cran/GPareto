@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 // hvolume2d_Rcpp
 double hvolume2d_Rcpp(NumericMatrix S, double x1, double x2);
-RcppExport SEXP GPareto_hvolume2d_Rcpp(SEXP SSEXP, SEXP x1SEXP, SEXP x2SEXP) {
+RcppExport SEXP _GPareto_hvolume2d_Rcpp(SEXP SSEXP, SEXP x1SEXP, SEXP x2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -20,7 +20,7 @@ END_RCPP
 }
 // exipsi_Rcpp
 double exipsi_Rcpp(double a, double b, double m, double s);
-RcppExport SEXP GPareto_exipsi_Rcpp(SEXP aSEXP, SEXP bSEXP, SEXP mSEXP, SEXP sSEXP) {
+RcppExport SEXP _GPareto_exipsi_Rcpp(SEXP aSEXP, SEXP bSEXP, SEXP mSEXP, SEXP sSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -34,7 +34,7 @@ END_RCPP
 }
 // EHI_2d_wrap_Rcpp
 double EHI_2d_wrap_Rcpp(NumericMatrix P, NumericVector r, NumericVector mu, NumericVector s);
-RcppExport SEXP GPareto_EHI_2d_wrap_Rcpp(SEXP PSEXP, SEXP rSEXP, SEXP muSEXP, SEXP sSEXP) {
+RcppExport SEXP _GPareto_EHI_2d_wrap_Rcpp(SEXP PSEXP, SEXP rSEXP, SEXP muSEXP, SEXP sSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -45,4 +45,16 @@ BEGIN_RCPP
     rcpp_result_gen = Rcpp::wrap(EHI_2d_wrap_Rcpp(P, r, mu, s));
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_GPareto_hvolume2d_Rcpp", (DL_FUNC) &_GPareto_hvolume2d_Rcpp, 3},
+    {"_GPareto_exipsi_Rcpp", (DL_FUNC) &_GPareto_exipsi_Rcpp, 4},
+    {"_GPareto_EHI_2d_wrap_Rcpp", (DL_FUNC) &_GPareto_EHI_2d_wrap_Rcpp, 4},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_GPareto(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }

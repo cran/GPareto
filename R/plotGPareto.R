@@ -36,12 +36,15 @@
 ##'   \item \code{resolution}, \code{option}, \code{nintegpoints} are to be passed to \code{\link[GPareto]{plot_uncertainty}}
 ##'   \item \code{displaytype} type of display for \code{UQ_dens}, see \code{\link[ks]{plot.kde}},
 ##'   \item \code{printVD} logical, if \code{TRUE} and \code{UQ_PF} is \code{TRUE} as well, print the value of the Vorob'ev deviation,
+##'   \item \code{use.rgl} if \code{TRUE}, use rgl for 3D plots, else \code{\link[graphics]{persp}} is used,
+##'   \item \code{bounds} if \code{use.rgl} is \code{TRUE}, optional \code{2*nobj} matrix of boundaries, see \code{\link[GPareto]{plotParetoEmp}}
 ##'   \item \code{meshsize3d} mesh size of the perspective view for 3-objective problems,
 ##'   \item \code{theta}, \code{phi} angles for perspective view of 3-objective problems,
 ##'   \item \code{add_denoised_PF} if \code{TRUE}, in the noisy case, add the Pareto front from the estimated mean of the observations.
 ##' }
 ##' @export
 ##' @importFrom graphics abline persp
+##' @importFrom rgl points3d
 ##' @references
 ##' M. Binois, D. Ginsbourger and O. Roustant (2015), Quantifying Uncertainty on Pareto Fronts with Gaussian process conditional simulations, 
 ##' \emph{European Journal of Operational Research}, 243(2), 386-394. \cr \cr
@@ -68,12 +71,34 @@
 ##' ## With noise
 ##' noise.var <- c(10, 2)
 ##' funnoise <- function(x) {P1(x) + sqrt(noise.var)*rnorm(n=2)}
-##' res <- easyGParetoptim(fn=funnoise, lower=lower, upper=upper, budget=15, noise.var=noise.var,
+##' res2 <- easyGParetoptim(fn=funnoise, lower=lower, upper=upper, budget=15, noise.var=noise.var,
 ##'                        control=list(method="EHI", inneroptim="pso", maxit=20))
 ##'                        
-##' plotGPareto(res, control=list(add_denoised_PF=FALSE)) # noisy observations only
-##' plotGPareto(res)  
+##' plotGPareto(res2, control=list(add_denoised_PF=FALSE)) # noisy observations only
+##' plotGPareto(res2)
 ##' 
+##' #---------------------------------------------------------------------------
+##' # 3D objective function
+##' #---------------------------------------------------------------------------
+##' set.seed(1)
+##' n_var <- 3 
+##' fname <- DTLZ1
+##' lower <- rep(0, n_var)
+##' upper <- rep(1, n_var)
+##' res3 <- easyGParetoptim(fn=fname, lower=lower, upper=upper, budget=50, 
+##' control=list(method="EHI", inneroptim="pso", maxit=20))
+##' 
+##' ## Pareto front only
+##' plotGPareto(res3)
+##' 
+##' ## With noise
+##' noise.var <- c(10, 2, 5)
+##' funnoise <- function(x) {fname(x) + sqrt(noise.var)*rnorm(n=3)}
+##' res4 <- easyGParetoptim(fn=funnoise, lower=lower, upper=upper, budget=100, noise.var=noise.var,
+##'                        control=list(method="EHI", inneroptim="pso", maxit=20))
+##'                        
+##' plotGPareto(res4, control=list(add_denoised_PF=FALSE)) # noisy observations only
+##' plotGPareto(res4)   
 ##' }
 plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens = FALSE,
                         lower = NULL, upper = NULL,
@@ -81,6 +106,7 @@ plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens 
                                        PF.points.col = "blue", VE.line.col = "cyan",
                                        nsim = 100, npsim = 1500, gridtype = "runif",
                                        displaytype = "persp", printVD = TRUE,
+                                       use.rgl = TRUE, bounds = NULL,
                                        meshsize3d = 50, theta = -25, phi = 10,
                                        add_denoised_PF = TRUE)){
   # Check of arguments
@@ -95,6 +121,8 @@ plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens 
   if(is.null(control$gridtype)) control$gridtype <- "runif"
   if(is.null(control$displaytype)) control$displaytype <- "persp"
   if(is.null(control$printVD)) control$printVD <- TRUE
+  if(is.null(control$use.rgl)) control$use.rgl <- TRUE
+  if(is.null(control$bounds)) control$bounds <- NULL
   if(is.null(control$meshsize3d)) control$meshsize3d <- 50
   if(is.null(control$theta)) control$theta <- -25
   if(is.null(control$phi)) control$phi <- 10
@@ -160,76 +188,81 @@ plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens 
       }
       
       
-      
-      
     }else{
       if(!is.null(res$history)){ #easyGPareto
         if (control$add_denoised_PF){
-          ally <- res$y.denoised
-        } else {
-          ally <- res$history$y
+          ally.noisy <- res$history$y.denoised
         }
+        ally <- res$history$y
       } else {
         if(res$lastmodel[[1]]@noise.flag){#GParetoptim.noisy
           if (control$add_denoised_PF){ 
-            ally <- t(predict_kms(res$lastmodel, newdata=res$lastmodel[[1]]@X, type="UK", checkNames = FALSE, 
-                                  light.return = TRUE, cov.compute = FALSE)$mean)
-          } else {
-            ally <- Reduce(cbind, lapply(res$lastmodel, slot, "y"))
+            ally.noisy <- t(predict_kms(res$lastmodel, newdata=res$lastmodel[[1]]@X, type="UK", checkNames = FALSE, 
+                                        light.return = TRUE, cov.compute = FALSE)$mean)
           }
+          ally <- Reduce(cbind, lapply(res$lastmodel, slot, "y"))
+          
         } else {#GParetoptim
           ally <- Reduce(cbind, lapply(res$lastmodel, slot, "y"))
         }
       }
       if(n.obj == 3){
-        ally <- apply(ally, c(1,2), round, digits = 4)
-        ally <- ally[!duplicated(ally),]
         
-        xax <- sort(ally[,1])
-        xax <- xax[!duplicated(xax)]
-        
-        yax <- sort(ally[,2])
-        yax <- yax[!duplicated(yax)]
-        
-        zlevels <- sort(ally[,3])
-        zlevels <- zlevels[!duplicated(zlevels)]
-        
-        # add levels if there are not as many as meshsize3d^3
-        if(length(xax) * length(yax) * length(zlevels) < control$meshsize3d^3){
-          while(length(xax) < control$meshsize3d){
-            tmp <- order(xax[-1] - xax[-length(xax)], decreasing = TRUE)[1]
-            xax <- sort(c(xax, (xax[tmp + 1] + xax[tmp])/2))
+        if(control$use.rgl){
+          plotParetoEmp(t(nondominated_points(t(ally))), bounds = control$bounds, add = add)
+          points3d(ally, col = control$PF.points.col)
+          if(exists("ally.noisy")) plotParetoEmp(t(nondominated_points(t(ally.noisy))), add = TRUE)
+          
+        }else{
+          
+          ally <- apply(ally, c(1,2), round, digits = 4)
+          ally <- ally[!duplicated(ally),]
+          
+          xax <- sort(ally[,1])
+          xax <- xax[!duplicated(xax)]
+          
+          yax <- sort(ally[,2])
+          yax <- yax[!duplicated(yax)]
+          
+          zlevels <- sort(ally[,3])
+          zlevels <- zlevels[!duplicated(zlevels)]
+          
+          # add levels if there are not as many as meshsize3d^3
+          if(length(xax) * length(yax) * length(zlevels) < control$meshsize3d^3){
+            while(length(xax) < control$meshsize3d){
+              tmp <- order(xax[-1] - xax[-length(xax)], decreasing = TRUE)[1]
+              xax <- sort(c(xax, (xax[tmp + 1] + xax[tmp])/2))
+            }
+            while(length(yax) < control$meshsize3d){
+              tmp <- order(yax[-1] - yax[-length(yax)], decreasing = TRUE)[1]
+              yax <- sort(c(yax, (yax[tmp + 1] + yax[tmp])/2))
+            }
+            while(length(zlevels) < control$meshsize3d){
+              tmp <- order(zlevels[-1] - zlevels[-length(zlevels)], decreasing = TRUE)[1]
+              zlevels <- sort(c(zlevels, (zlevels[tmp + 1] + zlevels[tmp])/2))
+            }
           }
-          while(length(yax) < control$meshsize3d){
-            tmp <- order(yax[-1] - yax[-length(yax)], decreasing = TRUE)[1]
-            yax <- sort(c(yax, (yax[tmp + 1] + yax[tmp])/2))
+          
+          # rawGrid <- as.matrix(expand.grid(ally[,1], ally[,2], ally[,3]))
+          rawGrid <- as.matrix(expand.grid(xax, yax, zlevels))
+          dom_elements <- apply(rawGrid, 1, function(x){is_dominated(cbind(as.vector(x), t(ally + 1e-6)))[1]})
+          rawGrid <- rawGrid[!dom_elements,]
+          dom_elements <- apply(rawGrid, 1, function(x){is_dominated(cbind(as.vector(x), t(ally - 1e-6)))[1]})
+          rawGrid <- rawGrid[dom_elements,]
+          
+          
+          
+          xygrid <- as.matrix(expand.grid(xax, yax))
+          z <- apply(xygrid, 1, function(x){
+            tmp <- rawGrid[which(rawGrid[,1] == x[1] & rawGrid[,2] == x[2]),3]
+            if(length(tmp) == 0) return(NA)
+            return(min(tmp))
           }
-          while(length(zlevels) < control$meshsize3d){
-            tmp <- order(zlevels[-1] - zlevels[-length(zlevels)], decreasing = TRUE)[1]
-            zlevels <- sort(c(zlevels, (zlevels[tmp + 1] + zlevels[tmp])/2))
-          }
+          )
+          
+          persp(x = xax, y = yax, z = matrix(z, nrow = length(xax)), theta = control$theta, phi = control$phi, scale = TRUE,
+                ticktype = "detailed", xlab = "f1", ylab = "f2", zlab = "f3")
         }
-        
-        # rawGrid <- as.matrix(expand.grid(ally[,1], ally[,2], ally[,3]))
-        rawGrid <- as.matrix(expand.grid(xax, yax, zlevels))
-        dom_elements <- apply(rawGrid, 1, function(x){is_dominated(cbind(as.vector(x), t(ally + 1e-6)))[1]})
-        rawGrid <- rawGrid[!dom_elements,]
-        dom_elements <- apply(rawGrid, 1, function(x){is_dominated(cbind(as.vector(x), t(ally - 1e-6)))[1]})
-        rawGrid <- rawGrid[dom_elements,]
-        
-        
-        
-        xygrid <- as.matrix(expand.grid(xax, yax))
-        z <- apply(xygrid, 1, function(x){
-          tmp <- rawGrid[which(rawGrid[,1] == x[1] & rawGrid[,2] == x[2]),3]
-          if(length(tmp) == 0) return(NA)
-          return(min(tmp))
-        }
-        )
-        
-        persp(x = xax, y = yax, z = matrix(z, nrow = length(xax)), theta = control$theta, phi = control$phi, scale = TRUE,
-              ticktype = "detailed", xlab = "f1", ylab = "f2", zlab = "f3")
-        
         
       }else{
         parplotPF_nd(ally, add = add)

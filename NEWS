@@ -1,4 +1,9 @@
-## GPareto 1.1.0
+## GPareto 1.1.1
+
+## change / GPareto 1.1.0
+  * improve 3D Pareto front representation with rgl
+  * no more transpose with predict_kms
+  * checkPredict use light option
 
 ## change / GPareto 1.0.3
   * easyGParetoptim and GParetoptim now allow noisy objectives, with the noise.var argument

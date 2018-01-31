@@ -36,7 +36,7 @@ checkPredict <- function(x, model, threshold = 1e-4, distance = "covdist", type 
       mindist <- Inf
       for(i in 1:length(model)){
         if(class(model[[i]]) != "fastfun"){
-          pred.sd <- predict(object = model[[i]], newdata = x, type = type, checkNames = FALSE)
+          pred.sd <- predict(object = model[[i]], newdata = x, type = type, checkNames = FALSE, light.return = TRUE)
           mindist <- min(mindist, pred.sd$sd/sqrt(model[[i]]@covariance@sd2))
         }
       }
@@ -47,11 +47,11 @@ checkPredict <- function(x, model, threshold = 1e-4, distance = "covdist", type 
       mindist <- Inf
       for(i in 1:length(model)){
         if(class(model[[i]]) != "fastfun"){
-        kxx <- drop(covMat1Mat2(model[[i]]@covariance, x, matrix(x, nrow = 1)))
-        kxy <- drop(covMat1Mat2(model[[i]]@covariance, x, model[[i]]@X))
-        kyy <- drop(diag(covMat1Mat2(model[[i]]@covariance, model[[i]]@X, model[[i]]@X)))
-        
-        mindist <- sqrt(pmax(0, min(mindist, min(kxx - 2*kxy + kyy) / model[[i]]@covariance@sd2)))
+          kxx <- drop(covMat1Mat2(model[[i]]@covariance, x, matrix(x, nrow = 1)))
+          kxy <- drop(covMat1Mat2(model[[i]]@covariance, x, model[[i]]@X))
+          kyy <- drop(diag(covMat1Mat2(model[[i]]@covariance, model[[i]]@X, model[[i]]@X)))
+          
+          mindist <- sqrt(pmax(0, min(mindist, min(kxx - 2*kxy + kyy) / model[[i]]@covariance@sd2)))
         }
       } 
     }

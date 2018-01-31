@@ -4,11 +4,11 @@
 ##' @export 
 ##' @details So far only \code{light.return = TRUE} and \code{cov.compute = FALSE} handled.
 predict_kms <- function(model, newdata, type, se.compute = TRUE, 
-                        cov.compute = FALSE, light.return = FALSE,
-                        bias.correct = FALSE, checkNames = TRUE, ...){
+                       cov.compute = FALSE, light.return = FALSE,
+                       bias.correct = FALSE, checkNames = TRUE, ...){
   
   pred <- lapply(model, FUN=predict, newdata=newdata, checkNames=FALSE, type=type, cov.compute = FALSE, light.return = TRUE)
   
-  return(list(mean =  t(Reduce(cbind, lapply(pred, function(alist) alist$mean))), sd = t(Reduce(cbind, lapply(pred, function(alist) alist$sd)))))
+  return(list(mean =  Reduce(rbind, lapply(pred, function(alist) alist$mean)), sd = Reduce(rbind, lapply(pred, function(alist) alist$sd))))
 }
 

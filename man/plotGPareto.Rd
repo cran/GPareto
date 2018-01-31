@@ -8,8 +8,8 @@ plotGPareto(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE,
   UQ_dens = FALSE, lower = NULL, upper = NULL, control = list(pch = 20,
   col = "red", PF.line.col = "cyan", PF.pch = 17, PF.points.col = "blue",
   VE.line.col = "cyan", nsim = 100, npsim = 1500, gridtype = "runif",
-  displaytype = "persp", printVD = TRUE, meshsize3d = 50, theta = -25, phi = 10,
-  add_denoised_PF = TRUE))
+  displaytype = "persp", printVD = TRUE, use.rgl = TRUE, bounds = NULL,
+  meshsize3d = 50, theta = -25, phi = 10, add_denoised_PF = TRUE))
 }
 \arguments{
 \item{res}{list returned by \code{\link[GPareto]{GParetoptim}} or \code{\link[GPareto]{easyGParetoptim}},}
@@ -59,6 +59,8 @@ Various parameters can be used for the display of results and/or passed to subse
   \item \code{resolution}, \code{option}, \code{nintegpoints} are to be passed to \code{\link[GPareto]{plot_uncertainty}}
   \item \code{displaytype} type of display for \code{UQ_dens}, see \code{\link[ks]{plot.kde}},
   \item \code{printVD} logical, if \code{TRUE} and \code{UQ_PF} is \code{TRUE} as well, print the value of the Vorob'ev deviation,
+  \item \code{use.rgl} if \code{TRUE}, use rgl for 3D plots, else \code{\link[graphics]{persp}} is used,
+  \item \code{bounds} if \code{use.rgl} is \code{TRUE}, optional \code{2*nobj} matrix of boundaries, see \code{\link[GPareto]{plotParetoEmp}}
   \item \code{meshsize3d} mesh size of the perspective view for 3-objective problems,
   \item \code{theta}, \code{phi} angles for perspective view of 3-objective problems,
   \item \code{add_denoised_PF} if \code{TRUE}, in the noisy case, add the Pareto front from the estimated mean of the observations.
@@ -86,12 +88,34 @@ plotGPareto(res, UQ_PF = TRUE, UQ_PS = TRUE, UQ_dens = TRUE)
 ## With noise
 noise.var <- c(10, 2)
 funnoise <- function(x) {P1(x) + sqrt(noise.var)*rnorm(n=2)}
-res <- easyGParetoptim(fn=funnoise, lower=lower, upper=upper, budget=15, noise.var=noise.var,
+res2 <- easyGParetoptim(fn=funnoise, lower=lower, upper=upper, budget=15, noise.var=noise.var,
                        control=list(method="EHI", inneroptim="pso", maxit=20))
                        
-plotGPareto(res, control=list(add_denoised_PF=FALSE)) # noisy observations only
-plotGPareto(res)  
+plotGPareto(res2, control=list(add_denoised_PF=FALSE)) # noisy observations only
+plotGPareto(res2)
 
+#---------------------------------------------------------------------------
+# 3D objective function
+#---------------------------------------------------------------------------
+set.seed(1)
+n_var <- 3 
+fname <- DTLZ1
+lower <- rep(0, n_var)
+upper <- rep(1, n_var)
+res3 <- easyGParetoptim(fn=fname, lower=lower, upper=upper, budget=50, 
+control=list(method="EHI", inneroptim="pso", maxit=20))
+
+## Pareto front only
+plotGPareto(res3)
+
+## With noise
+noise.var <- c(10, 2, 5)
+funnoise <- function(x) {fname(x) + sqrt(noise.var)*rnorm(n=3)}
+res4 <- easyGParetoptim(fn=funnoise, lower=lower, upper=upper, budget=100, noise.var=noise.var,
+                       control=list(method="EHI", inneroptim="pso", maxit=20))
+                       
+plotGPareto(res4, control=list(add_denoised_PF=FALSE)) # noisy observations only
+plotGPareto(res4)   
 }
 }
 \references{
