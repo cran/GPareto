@@ -1,6 +1,6 @@
 ##' Given a list of objects of class \code{\link[DiceKriging]{km}} and a set of tuning
 ##' parameters (\code{lower, upper and critcontrol}), \code{crit_optimizer} performs
-##' the maximization of an Expected Improvement or SUR criterion and delivers
+##' the maximization of an infill criterion and delivers
 ##' the next point to be visited in a multi-objective EGO-like procedure. \cr \cr
 ##' The latter maximization relies either on a genetic algorithm using derivatives,
 ##' \code{\link[rgenoud]{genoud}}, particle swarm algorithm \code{\link[pso]{pso}},
@@ -9,7 +9,7 @@
 ##' needed about the objective function reduces here to the vector of response values
 ##' embedded in the models (no call to the objective functions or simulators (except with \code{cheapfn})).
 ##'
-##' @title Maximization of multiobjective Expected Improvement criteria
+##' @title Maximization of multiobjective infill criterion
 ##' 
 ##' @param crit sampling criterion. Four choices are available : "\code{SMS}", "\code{EHI}", "\code{EMI}" and "\code{SUR}",
 ##' @param model list of objects of class \code{\link[DiceKriging]{km}}, one for each objective functions,
@@ -468,6 +468,9 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfn = NULL, ty
     control <- list(fnscale=-1, maxit=optimcontrol$maxit, s = optimcontrol$s)
     if (is.null(control$maxit))   control$maxit=400
     if (is.null(control$s)) control$s = max(floor(10+2*sqrt(d)), 20)
+    
+    # if criterion is EHI, use vectorized evaluation with pso
+    if(crit == "EHI") control$vectorize <- TRUE
     
     o <- psoptim(par = rep(NA, d) , criterion, lower = lower, upper = upper, control = control, model=model, type=type, 
                  paretoFront=paretoFront, critcontrol=critcontrol)

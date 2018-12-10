@@ -2,7 +2,7 @@
 % Please edit documentation in R/crit_optimizer.R
 \name{crit_optimizer}
 \alias{crit_optimizer}
-\title{Maximization of multiobjective Expected Improvement criteria}
+\title{Maximization of multiobjective infill criterion}
 \usage{
 crit_optimizer(crit = "SMS", model, lower, upper, cheapfn = NULL,
   type = "UK", paretoFront = NULL, critcontrol = NULL,
@@ -54,7 +54,7 @@ A list with components:
 \description{
 Given a list of objects of class \code{\link[DiceKriging]{km}} and a set of tuning
 parameters (\code{lower, upper and critcontrol}), \code{crit_optimizer} performs
-the maximization of an Expected Improvement or SUR criterion and delivers
+the maximization of an infill criterion and delivers
 the next point to be visited in a multi-objective EGO-like procedure. \cr \cr
 The latter maximization relies either on a genetic algorithm using derivatives,
 \code{\link[rgenoud]{genoud}}, particle swarm algorithm \code{\link[pso]{pso}},

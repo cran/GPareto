@@ -3,7 +3,6 @@
 \name{ZDT1}
 \alias{ZDT1}
 \alias{ZDT2}
-\alias{ZDT2}
 \alias{ZDT3}
 \alias{ZDT4}
 \alias{ZDT6}

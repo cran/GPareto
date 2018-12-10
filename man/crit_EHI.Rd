@@ -4,11 +4,11 @@
 \alias{crit_EHI}
 \title{Expected Hypervolume Improvement with m objectives}
 \usage{
-crit_EHI(x, model, paretoFront = NULL, critcontrol = list(nb.samp = 50, seed
-  = 42), type = "UK")
+crit_EHI(x, model, paretoFront = NULL, critcontrol = list(nb.samp = 50,
+  seed = 42), type = "UK")
 }
 \arguments{
-\item{x}{a vector representing the input for which one wishes to calculate \code{EHI},}
+\item{x}{a vector representing the input for which one wishes to calculate \code{EHI}, alternatively a matrix with one point per row,}
 
 \item{model}{list of objects of class \code{\link[DiceKriging]{km}}, one for each objective functions,}
 
@@ -62,8 +62,8 @@ Front_Pareto <- t(nondominated_points(t(response.grid)))
 mf1 <- km(~., design = design.grid, response = response.grid[,1])
 mf2 <- km(~., design = design.grid, response = response.grid[,2])
 
-EHI_grid <- apply(test.grid, 1, crit_EHI, model = list(mf1, mf2),
-                     critcontrol = list(refPoint = c(300,0)))
+EHI_grid <- crit_EHI(x = as.matrix(test.grid), model = list(mf1, mf2),
+         critcontrol = list(refPoint = c(300,0)))
 
 filled.contour(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid), nlevels = 50,
                matrix(EHI_grid, n.grid), main = "Expected Hypervolume Improvement",

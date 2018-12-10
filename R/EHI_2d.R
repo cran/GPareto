@@ -57,8 +57,9 @@ EHI_2d <- function(x, model, critcontrol=NULL, type = "UK", paretoFront = NULL){
   
   n.obj <- length(model)
   d <- model[[1]]@d
-  x.new <- matrix(x, 1, d)
-  
+  if (!is.matrix(x)) x <- matrix(x, 1, d)  
+  n.candidates <- nrow(x)
+
   if(is.null(paretoFront) || is.null(critcontrol$refPoint)){
     observations <- Reduce(cbind, lapply(model, slot, "y"))
     if(is.null(paretoFront))
@@ -90,17 +91,17 @@ EHI_2d <- function(x, model, critcontrol=NULL, type = "UK", paretoFront = NULL){
     #   mu[i]    <- pred$mean
     #   sigma[i] <- pred$sd
     # }
-    pred <- predict_kms(model, newdata=x.new, type=type, checkNames = FALSE, light.return = TRUE, cov.compute = FALSE)
-    mu <- as.numeric(pred$mean)
-    sigma <- as.numeric(pred$sd)
+    pred <- predict_kms(model, newdata=x, type=type, checkNames = FALSE, light.return = TRUE, cov.compute = FALSE)
+    mu <- t(pred$mean)
+    sigma <- t(pred$sd)
     
     ## A new x too close to the known observations could result in numerical problems
-    
-    if(checkPredict(x, model, type = type, distance = critcontrol$distance, threshold = critcontrol$threshold)){
-      return(-1)
-    }else{
-      return(EHI_2d_wrap_Rcpp(paretoFront, refPoint, mu, sigma))
-    }
+    # check <- apply(x, 1, checkPredict, model = model, type = type, distance = critcontrol$distance, threshold = critcontrol$threshold)
+    check <- checkPredict(x, model, threshold = critcontrol$threshold, distance = critcontrol$distance, type = type)
+    resu <- rep(0, n.candidates)
+    resu[check] <- -1
+    resu[!check] <- EHI_2d_wrap_Rcpp(paretoFront, refPoint, mu[!check,,drop=FALSE], sigma[!check,,drop=FALSE])
+    return(resu)
   }
 }
 

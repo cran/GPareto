@@ -4,7 +4,8 @@
 \alias{plotSymDifRNP}
 \title{Symmetrical difference of RNP sets}
 \usage{
-plotSymDifRNP(set1, set2, xlim, ylim, fill = "black", add = "FALSE", ...)
+plotSymDifRNP(set1, set2, xlim, ylim, fill = "black", add = "FALSE",
+  ...)
 }
 \arguments{
 \item{set1, set2}{RNP sets considered,}

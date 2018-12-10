@@ -4,18 +4,18 @@
 \alias{checkPredict}
 \title{Prevention of numerical instability for a new observation}
 \usage{
-checkPredict(x, model, threshold = 1e-04, distance = "covdist",
+checkPredict(x, model, threshold = 1e-04, distance = "euclidean",
   type = "UK")
 }
 \arguments{
-\item{x}{a vector representing the input to check,}
+\item{x}{a vector representing the input to check, alternatively a matrix with one point per row,}
 
 \item{model}{list of objects of class \code{\link[DiceKriging]{km}}, one for each objective functions,}
 
 \item{threshold}{optional value for the minimal distance to an existing observation, default to \code{1e-4},}
 
-\item{distance}{selection of the distance between new observations, between "\code{euclidean}",
-"\code{covdist}" (default) and "\code{covratio}", see details,}
+\item{distance}{selection of the distance between new observations, between "\code{euclidean}" (default), "\code{none}",
+"\code{covdist}" and "\code{covratio}", see details,}
 
 \item{type}{"\code{SK}" or "\code{UK}" (default), depending whether uncertainty related to trend estimation has to be taken into account.}
 }
@@ -29,7 +29,8 @@ Closeness can be estimated with several distances.
 \details{
 If the distance between \code{x} and the closest observations in \code{model} is below
  \code{threshold}, \code{x} should not be evaluated to avoid numerical instabilities.
-The distance can simply be the Euclidean distance or the canonical distance associated with the kriging covariance k: 
+The distance can simply be the Euclidean distance or the canonical distance associated with the kriging predictive covariance k: 
   \deqn{d(x,y) = \sqrt{k(x,x) - 2k(x,y) + k(y,y)}.}{d(x,y) = \sqrt(k(x,x) - 2k(x,y) + k(y,y)).} 
   The last solution is the ratio between the prediction variance at \code{x} and the variance of the process.
+  \code{none} can be used, e.g., if points have been selected already.
 }

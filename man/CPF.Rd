@@ -5,8 +5,8 @@
 \title{Conditional Pareto Front simulations}
 \usage{
 CPF(fun1sims, fun2sims, response, paretoFront = NULL, f1lim = NULL,
-  f2lim = NULL, refPoint = NULL, n.grid = 100, compute.VorobExp = TRUE,
-  compute.VorobDev = TRUE)
+  f2lim = NULL, refPoint = NULL, n.grid = 100,
+  compute.VorobExp = TRUE, compute.VorobDev = TRUE)
 }
 \arguments{
 \item{fun1sims}{numeric matrix containing the conditional simulations of the first output (one sample in each row),}
