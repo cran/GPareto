@@ -22,15 +22,15 @@ n2 <- 1000
 
 test <- matrix(runif(d * n), n)
 ref <- matrix(runif(d * n), n)
-indPF <- nonDomInd(ref)
+indPF <- which(!is_dominated(t(ref)))
 
-system.time(res <- nonDomSet(test, ref[indPF,,drop = F]))
+system.time(res <- nonDomSet(test, ref[indPF,,drop = FALSE]))
 
 res2 <- rep(NA, n2)
 library(emoa)
 t0 <- Sys.time()
 for(i in 1:n2){
-  res2[i] <- !is_dominated(t(rbind(test[i,, drop = F], ref[indPF,])))[1]
+  res2[i] <- !is_dominated(t(rbind(test[i,, drop = FALSE], ref[indPF,])))[1]
 }
 print(Sys.time() - t0)
 

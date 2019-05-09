@@ -67,7 +67,9 @@
 ##' \emph{Statistics and Computing}, 25(6), 1265-1280. \cr \cr
 ##' T. Wagner, M. Emmerich, A. Deutz, W. Ponweiser (2010), On expected-improvement criteria for model-based multi-objective optimization.   
 ##' \emph{Parallel Problem Solving from Nature}, 718-727, Springer, Berlin. \cr \cr
-##' J. D. Svenson (2011), \emph{Computer Experiments: Multiobjective Optimization and Sensitivity Analysis}, Ohio State university, PhD thesis. 
+##' J. D. Svenson (2011), \emph{Computer Experiments: Multiobjective Optimization and Sensitivity Analysis}, Ohio State university, PhD thesis. \cr \cr
+##' M. Binois, V. Picheny (2019), GPareto: An R Package for Gaussian-Process-Based Multi-Objective Optimization and Analysis,
+##' \emph{Journal of Statistical Software}, 89(8), 1--30.
 ##' 
 ##' @importFrom DiceDesign maximinESE_LHS lhsDesign
 ##' 
@@ -275,13 +277,13 @@ easyGParetoptim <- function (fn, cheapfn = NULL, budget, lower, upper, par=NULL,
   if (is.null(noise.var)) {
     # Compute current best
     value <- t(nondominated_points(t(ally)))
-    par   <- allX[!is_dominated(t(ally)),]
+    par   <- allX[!is_dominated(t(ally)),, drop = FALSE]
     return(list(par=par, value = value, history=list(X=allX, y=ally), model=omEGO$lastmodel))
   } else {
     # Compute current denoised best
     observations.denoised <- omEGO$observations.denoised
     value <- t(nondominated_points(t(observations.denoised)))
-    par   <- allX[!is_dominated(t(observations.denoised)),]
+    par   <- allX[!is_dominated(t(observations.denoised)),, drop = FALSE]
     return(list(par=par, value = value, history=list(X=allX, y=ally, y.denoised=observations.denoised), model=omEGO$lastmodel))
   }
   }

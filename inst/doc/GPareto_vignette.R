@@ -275,7 +275,8 @@ omEGO1 <- crit_optimizer(crit = "SUR", model = model,  lower = c(0, 0),
   )
 
 ## ----echo=TRUE,message=FALSE,warning=FALSE, results='hide'----------------
-fun1 <- function(x) P1(x)[, 1]; fun2 <- function(x) P1(x)[, 2]
+fun1 <- function(x) P1(x)[, 1]
+fun2 <- function(x) P1(x)[, 2]
 fastmf2 <- fastfun(fn = fun2, design = design, response = response[, 2])
 model2 <- list(mf1, fastmf2)
 

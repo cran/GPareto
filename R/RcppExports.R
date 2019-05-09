@@ -13,7 +13,6 @@ EHI_2d_wrap_Rcpp <- function(P, r, mu, s) {
     .Call(`_GPareto_EHI_2d_wrap_Rcpp`, P, r, mu, s)
 }
 
-#' Kung sorting
 #' @param i_begin, i_end first index in the matrix to consider
 #' @param ptr_mat pointer to matrix with dimensions:
 #' @param nobj,nr number of columns and rows
@@ -56,15 +55,15 @@ nonDomInd_cpp <- function(mat) {
 #'
 #' test <- matrix(runif(d * n), n)
 #' ref <- matrix(runif(d * n), n)
-#' indPF <- nonDomInd(ref)
+#' indPF <- which(!is_dominated(t(ref)))
 #'
-#' system.time(res <- nonDomSet(test, ref[indPF,,drop = F]))
+#' system.time(res <- nonDomSet(test, ref[indPF,,drop = FALSE]))
 #'
 #' res2 <- rep(NA, n2)
 #' library(emoa)
 #' t0 <- Sys.time()
 #' for(i in 1:n2){
-#'   res2[i] <- !is_dominated(t(rbind(test[i,, drop = F], ref[indPF,])))[1]
+#'   res2[i] <- !is_dominated(t(rbind(test[i,, drop = FALSE], ref[indPF,])))[1]
 #' }
 #' print(Sys.time() - t0)
 #'
