@@ -5,15 +5,30 @@
 \title{Sequential multi-objective Expected Improvement maximization and model re-estimation,
  with a number of iterations fixed in advance by the user}
 \usage{
-GParetoptim(model, fn, cheapfn = NULL, crit = "SMS", nsteps, lower,
-  upper, type = "UK", cov.reestim = TRUE, critcontrol = NULL,
-  noise.var = NULL, reinterpolation = NULL,
-  optimcontrol = list(method = "genoud", trace = 1), ...)
+GParetoptim(
+  model,
+  fn,
+  ...,
+  cheapfn = NULL,
+  crit = "SMS",
+  nsteps,
+  lower,
+  upper,
+  type = "UK",
+  cov.reestim = TRUE,
+  critcontrol = NULL,
+  noise.var = NULL,
+  reinterpolation = NULL,
+  optimcontrol = list(method = "genoud", trace = 1),
+  ncores = 1
+)
 }
 \arguments{
 \item{model}{list of objects of class \code{\link[DiceKriging]{km}}, one for each objective functions,}
 
 \item{fn}{the multi-objective function to be minimized (vectorial output), found by a call to \code{\link[base]{match.fun}},}
+
+\item{...}{additional parameters to be given to the objective \code{fn}.}
 
 \item{cheapfn}{optional additional fast-to-evaluate objective function (handled next with class \code{\link[GPareto]{fastfun}}), which does not need a kriging model, 
 handled by a call to \code{\link[base]{match.fun}},}
@@ -50,7 +65,7 @@ A user defined method must have arguments like the default \code{\link[stats]{op
  A trace \code{trace} argument is available, it can be set to \code{0} to suppress all messages, to \code{1} (default) for displaying the optimization progresses,
  and \code{>1} for the highest level of details.}
 
-\item{...}{additional parameters to be given to the objective \code{fn}.}
+\item{ncores}{number of CPU available (> 1 makes mean parallel \code{TRUE}). Only used with \code{discrete} optimization for now.}
 }
 \value{
 A list with components:

@@ -4,9 +4,18 @@
 \alias{crit_optimizer}
 \title{Maximization of multiobjective infill criterion}
 \usage{
-crit_optimizer(crit = "SMS", model, lower, upper, cheapfn = NULL,
-  type = "UK", paretoFront = NULL, critcontrol = NULL,
-  optimcontrol = NULL)
+crit_optimizer(
+  crit = "SMS",
+  model,
+  lower,
+  upper,
+  cheapfn = NULL,
+  type = "UK",
+  paretoFront = NULL,
+  critcontrol = NULL,
+  optimcontrol = NULL,
+  ncores = 1
+)
 }
 \arguments{
 \item{crit}{sampling criterion. Four choices are available : "\code{SMS}", "\code{EHI}", "\code{EMI}" and "\code{SUR}",}
@@ -43,6 +52,8 @@ occuring when adding points too close to the existing ones.}
  and return a list with \code{par} and \code{value}.
  A trace \code{trace} argument is available, it can be set to \code{0} to suppress all messages, to \code{1} (default) for displaying the optimization progresses,
  and \code{>1} for the highest level of details.}
+
+\item{ncores}{number of CPU available (> 1 makes mean parallel \code{TRUE}). Only used with \code{discrete} optimization for now.}
 }
 \value{
 A list with components: 

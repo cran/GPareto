@@ -4,12 +4,24 @@
 \alias{easyGParetoptim}
 \title{EGO algorithm for multiobjective optimization}
 \usage{
-easyGParetoptim(fn, cheapfn = NULL, budget, lower, upper, par = NULL,
-  value = NULL, noise.var = NULL, control = list(method = "SMS",
-  trace = 1, inneroptim = "pso", maxit = 100, seed = 42), ...)
+easyGParetoptim(
+  fn,
+  ...,
+  cheapfn = NULL,
+  budget,
+  lower,
+  upper,
+  par = NULL,
+  value = NULL,
+  noise.var = NULL,
+  control = list(method = "SMS", trace = 1, inneroptim = "pso", maxit = 100, seed = 42),
+  ncores = 1
+)
 }
 \arguments{
 \item{fn}{the multi-objective function to be minimized (vectorial output), found by a call to \code{\link[base]{match.fun}}, see details,}
+
+\item{...}{additional parameters to be given to the objective \code{fn}.}
 
 \item{cheapfn}{optional additional fast-to-evaluate objective function (handled next with class \code{\link[GPareto]{fastfun}}), 
 which does not need a kriging model, handled by a call to \code{\link[base]{match.fun}},}
@@ -31,7 +43,7 @@ Alternatively, set \code{noise.var="given_by_fn"}, see details.}
 
 \item{control}{an optional list of control parameters. See "Details",}
 
-\item{...}{additional parameters to be given to the objective \code{fn}.}
+\item{ncores}{number of CPU available (> 1 makes mean parallel \code{TRUE}). Only used with \code{discrete} optimization for now.}
 }
 \value{
 A list with components:
