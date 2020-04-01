@@ -1,4 +1,4 @@
-b4a1d40ca0cfe5720339c578325b99b9 *DESCRIPTION
+5f7f850fe6ab6a0ebc0348b00f4c3478 *DESCRIPTION
 2f6eea755bd4beabd9b1a7dd13b6acc6 *NAMESPACE
 49b72e63f9158087657fe78c93af4709 *NEWS
 56a790a4e842fd84d8922d3771428dff *R/CPF.R
@@ -31,11 +31,11 @@ d178c07b82aadebea132af7277fe7d1a *R/easyGParetoptim.R
 b1c61d21ca77d0ddd7d4da290943306c *R/predictkms.R
 43165bd86ba8907f2adde1cfa22aa5a8 *R/prob.of.non.domination.R
 a54dbebfb194923ba3bf9dc4e4e75748 *README.md
-65d43117d5e4cb0bae47a2c2deeb4694 *build/vignette.rds
+fb6856bfe3f4efeb1bab1c66f17f5d9e *build/vignette.rds
 e0883b478bbfdd27478a5455735b538c *inst/CITATION
 2f490f31f3c575182100b0a317e55957 *inst/doc/GPareto_vignette.R
 cde23781d2e0411288d524ff4f8417b4 *inst/doc/GPareto_vignette.Rnw
-99bfd27eb9d624e9f84063389070b60b *inst/doc/GPareto_vignette.pdf
+62b194833ecb2cb657d7086b6adfecc8 *inst/doc/GPareto_vignette.pdf
 eea47b99d88819fdc251c3345fb8464a *man/CPF.Rd
 c5f17c4f73b2809a4ca8ec77a591e27b *man/GPareto-package.Rd
 3c1b21539d5e61b476a5b5f3828b4ca0 *man/GParetoptim.Rd
