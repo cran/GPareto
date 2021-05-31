@@ -3,7 +3,7 @@
 ##' the maximization of an infill criterion and delivers
 ##' the next point to be visited in a multi-objective EGO-like procedure. \cr \cr
 ##' The latter maximization relies either on a genetic algorithm using derivatives,
-##' \code{\link[rgenoud]{genoud}}, particle swarm algorithm \code{\link[pso]{pso}},
+##' \code{\link[rgenoud]{genoud}}, particle swarm algorithm \code{\link[pso]{pso-package}},
 ##'  exhaustive search at pre-specified points or on a user defined method. 
 ##' It is important to remark that the information
 ##' needed about the objective function reduces here to the vector of response values
@@ -27,7 +27,7 @@
 ##'        For each method, further parameters can be set.\cr 
 ##'        For "\code{discrete}", one has to provide the argument "\code{candidate.points}". \cr
 ##'        For "\code{pso}", one can control the maximum number of iterations "\code{maxit}" (\code{400}) and the population size "\code{s}"
-##'        (default :  \code{max(20, floor(10+2*sqrt(length(dim))))} (see \code{\link[pso]{psoptim}}). \cr
+##'        (default :  \code{max(20, floor(10+2*sqrt(dim)))} (see \code{\link[pso]{psoptim}}). \cr
 ##'        For "\code{genoud}", one can control, among others, "\code{pop.size}" (default :  \code{[N = 3*2^dim} for \code{dim < 6} and  \code{N = 32*dim} otherwise]),
 ##' "\code{max.generations}" (\code{12}), "\code{wait.generations}" (\code{2}), "\code{BFGSburnin}" (\code{2}), \code{BFGSmaxit} (\code{N}) and 
 ##' \code{solution.tolerance} (\code{1e-21})
@@ -253,6 +253,7 @@ crit_optimizer <- function(crit = "SMS", model, lower, upper, cheapfn = NULL, ty
   if(is.null(optimcontrol$method)) optimcontrol$method <- "genoud"
   if(is.null(optimcontrol$trace)) optimcontrol$trace <- 1
   if(is.null(critcontrol$refPoint) && is.null(critcontrol$extendper)) critcontrol$extendper <- 0.2
+  if(is.null(critcontrol$distance)) critcontrol$distance <- "euclidean"
   
   if (!is.null(cheapfn)) {
     fastobs <- apply(model[[1]]@X, 1, cheapfn)

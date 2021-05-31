@@ -26,7 +26,7 @@
 ##'   \item \code{col}, \code{pch} correspond the color and plotting character for observations,
 ##'   \item \code{PF.line.col}, \code{PF.pch}, \code{PF.points.col} define the color of the line denoting the current Pareto front,
 ##'   the plotting character and color of non-dominated observations, respectively,
-##'   \item \code{nsim}, \code{npsim} and \code{gridtype} define the number of conditional simulations performed with \code{\link[DiceKriging]{simulate}}
+##'   \item \code{nsim}, \code{npsim} and \code{gridtype} define the number of conditional simulations performed with [DiceKriging::simulate()]
 ##'    along with the number of simulation points (in case \code{UQ_PF} and/or \code{UQ_dens} are \code{TRUE}),
 ##'   \item \code{gridtype} to define how simulation points are selected; 
 ##'   alternatives are '\code{runif}' (default) for uniformly sampled points,
@@ -278,10 +278,10 @@ plotGPareto <- function(res, add = FALSE, UQ_PF = FALSE, UQ_PS = FALSE, UQ_dens 
     if(control$gridtype == "runif"){
       simPoints <- matrix(runif(control$npsim*ncol(res$par)), control$npsim)
     }else{
-      if(control$grid_type == "LHS"){
+      if(control$gridtype == "LHS"){
         simPoints <- lhsDesign(control$npsim, ncol(res$par))$design
       }else{
-        if(control$grid_type == "grid2d"){
+        if(control$gridtype == "grid2d"){
           simPoints <- as.matrix(expand.grid(seq(0, 1,length.out = control$npsim),
                                              seq(0, 1,length.out = control$npsim)))
         }

@@ -12,7 +12,7 @@
 ##' @importFrom grDevices grey.colors
 ##' @importFrom graphics image plot.new
 ##' @details Function inspired by the function \code{\link[KrigInv]{print_uncertainty}} and 
-##' \code{\link[KrigInv]{print_uncertainty_nd}} from the package \code{\link[KrigInv]{KrigInv}}.
+##' \code{\link[KrigInv]{print_uncertainty_nd}} from the package \code{\link[KrigInv]{KrigInv-package}}.
 ##' Non-dominated observations are represented with green diamonds, dominated ones by yellow triangles. 
 ##' @examples
 ##' \dontrun{ 
@@ -45,6 +45,8 @@
 plot_uncertainty <- function(model, paretoFront = NULL, type = "pn", lower, upper,
                              resolution = 51, option = "mean", nintegpoints = 400){
   if(is.null(resolution)) resolution <- 51
+  if(is.null(nintegpoints)) nintegpoints <- 400
+  if(is.null(option)) option <- "mean"
   n.obj <- length(model)
   observations <- matrix(0, model[[1]]@n, n.obj)
   for (i in 1:n.obj) observations[,i] <- model[[i]]@y

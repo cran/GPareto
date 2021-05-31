@@ -11,15 +11,15 @@ opts_chunk$set(warning=FALSE)
 opts_chunk$set(message=FALSE)
 knit_hooks$set(document = function(x) {sub('\\usepackage[]{color}', '\\usepackage[dvipsnames]{xcolor}', x, fixed = TRUE)})
 
-knit_hooks$set(rgl = function(before, options, envir) {
-  if (!before) {
-    ## after a chunk has been evaluated
-    if (rgl.cur() == 0) return()  # no active device
-    name = paste(options$fig.path, options$label, sep = '')
-    rgl.snapshot(paste(name, '.png', sep = ''), fmt = 'png')
-     # rgl.postscript(paste(name, '.pdf', sep = ''), fmt = 'pdf')
-  }
-})
+# knit_hooks$set(rgl = function(before, options, envir) {
+#   if (!before) {
+#     ## after a chunk has been evaluated
+#     if (rgl.cur() == 0) return()  # no active device
+#     name = paste(options$fig.path, options$label, sep = '')
+#     rgl.snapshot(paste(name, '.png', sep = ''), fmt = 'png')
+#      # rgl.postscript(paste(name, '.pdf', sep = ''), fmt = 'pdf')
+#   }
+# })
 
 ## ----EpsInd,echo=FALSE, fig.width = 5, fig.height = 5---------------------
 ## Figure 1) Left
@@ -257,7 +257,7 @@ plotParetoGrid(P1)
 
 ## ----echo=TRUE,message=FALSE,warning=FALSE, results='hide'----------------
 set.seed(1)
-d <- 2; ninit <- 7; fun <- P1
+d <- 2; ninit <- 10; fun <- P1
 design <- lhsDesign(ninit, d, seed = 42)$design
 response <- t(apply(design, 1, fun))
 mf1 <- km(~., design = design, response = response[, 1])
@@ -344,19 +344,19 @@ filled.contour(x.grid, x.grid,
 )
 
 ## ----UQ_opt1, message = FALSE, warning=FALSE, results='hide', fig.show='hide'----
-sol <- GParetoptim(model = model, fn = fun, crit = "SUR", nsteps = 7,
+sol <- GParetoptim(model = model, fn = fun, crit = "SUR", nsteps = 4,
   lower = c(0, 0), upper = c(1, 1), optimcontrol = list(method = "pso"),
   critcontrol = list(SURcontrol = list(distrib = "SUR", n.points = 50)))
 
 ## ----UQ_opt2, message=FALSE, warning=FALSE, results='hide', fig.show='hide'----
 solFast <- GParetoptim(model = list(mf1), fn = fun1, cheapfn = fun2, 
-  crit = "SUR", nsteps = 7, lower = c(0, 0), upper = c(1, 1),
+  crit = "SUR", nsteps = 4, lower = c(0, 0), upper = c(1, 1),
   optimcontrol = list(method = "pso"),
   critcontrol = list(SURcontrol = list(distrib = "SUR", n.points = 50)))
 
 ## ----UQ_1, warning=FALSE, fig.show='hide',fig.width=6, fig.height=5-------
-lim1 <- seq(-50, 240, length.out = 101)
-lim2 <- seq(-35, 0, length.out = 101)
+lim1 <- seq(-50, 240, length.out = 51) # 51 for speed and lighter vignette
+lim2 <- seq(-35, 0, length.out = 51)
 plotGPareto(sol, UQ_PF = TRUE, UQ_PS = TRUE, UQ_dens = TRUE,
   control = list(f1lim = lim1, f2lim = lim2))
 
@@ -365,7 +365,7 @@ plotGPareto(solFast, UQ_PF = TRUE, UQ_PS = TRUE, UQ_dens = TRUE,
   control = list(f1lim = lim1, f2lim = lim2))
 
 ## ----warning=FALSE, message=FALSE-----------------------------------------
-newPoint <- getDesign(model = sol$lastmodel, target = c(42, -26),
+newPoint <- getDesign(model = sol$lastmodel, target = c(55, -30),
   lower = c(0, 0), upper = c(1, 1), optimcontrol = list(method = "pso"))
 newPoint
 
@@ -373,10 +373,11 @@ newPoint
 res <- easyGParetoptim(fn = DTLZ2, budget = 50, lower = rep(0, 4),
   upper = rep(1, 4))
 
-## ----ex3DPS, fig.show='hide',fig.width=c(5,6), fig.height=c(5,6), rgl = TRUE----
+## ----ex3DPS, fig.show='hide',fig.width=c(5,6), fig.height=c(5,6)----------
 library("rgl", quietly = TRUE)
 r3dDefaults$windowRect <- c(0,50, 800, 800) # for better looking figure
 plotGPareto(res, UQ_PS = TRUE, control = list(lower = rep(0, 4),
   upper = rep(1, 4), nintegpoints = 100, option = "mean",
   resolution = 25))
+rgl.snapshot("./figure/ex3DPS.png", fmt = 'png')
 
