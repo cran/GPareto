@@ -9,7 +9,7 @@ opts_chunk$set(background='#FFFFFF')
 opts_chunk$set(comment=NA)
 opts_chunk$set(warning=FALSE)
 opts_chunk$set(message=FALSE)
-knit_hooks$set(document = function(x) {sub('\\usepackage[]{color}', '\\usepackage[dvipsnames]{xcolor}', x, fixed = TRUE)})
+knit_hooks$set(document = function(x) {sub('\\usepackage[]{color}', '\\usepackage[usenames,dvipsnames]{xcolor}', x, fixed = TRUE)})
 
 # knit_hooks$set(rgl = function(before, options, envir) {
 #   if (!before) {
