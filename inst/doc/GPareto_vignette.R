@@ -9,7 +9,7 @@ opts_chunk$set(background='#FFFFFF')
 opts_chunk$set(comment=NA)
 opts_chunk$set(warning=FALSE)
 opts_chunk$set(message=FALSE)
-knit_hooks$set(document = function(x) {sub('\\usepackage[]{color}', '\\usepackage[usenames,dvipsnames]{xcolor}', x, fixed = TRUE)})
+knit_hooks$set(document = function(x) {sub('\\usepackage[]{color}', '\\usepackage[dvipsnames]{xcolor}', x, fixed = TRUE)})
 
 # knit_hooks$set(rgl = function(before, options, envir) {
 #   if (!before) {
@@ -344,19 +344,19 @@ filled.contour(x.grid, x.grid,
 )
 
 ## ----UQ_opt1, message = FALSE, warning=FALSE, results='hide', fig.show='hide'----
-sol <- GParetoptim(model = model, fn = fun, crit = "SUR", nsteps = 4,
+sol <- GParetoptim(model = model, fn = fun, crit = "SUR", nsteps = 2,
   lower = c(0, 0), upper = c(1, 1), optimcontrol = list(method = "pso"),
-  critcontrol = list(SURcontrol = list(distrib = "SUR", n.points = 50)))
+  critcontrol = list(SURcontrol = list(distrib = "SUR", n.points = 40)))
 
 ## ----UQ_opt2, message=FALSE, warning=FALSE, results='hide', fig.show='hide'----
 solFast <- GParetoptim(model = list(mf1), fn = fun1, cheapfn = fun2, 
-  crit = "SUR", nsteps = 4, lower = c(0, 0), upper = c(1, 1),
+  crit = "SUR", nsteps = 2, lower = c(0, 0), upper = c(1, 1),
   optimcontrol = list(method = "pso"),
-  critcontrol = list(SURcontrol = list(distrib = "SUR", n.points = 50)))
+  critcontrol = list(SURcontrol = list(distrib = "SUR", n.points = 40)))
 
 ## ----UQ_1, warning=FALSE, fig.show='hide',fig.width=6, fig.height=5-------
-lim1 <- seq(-50, 240, length.out = 51) # 51 for speed and lighter vignette
-lim2 <- seq(-35, 0, length.out = 51)
+lim1 <- seq(-50, 240, length.out = 41) # 41 for speed and lighter vignette
+lim2 <- seq(-35, 0, length.out = 41)
 plotGPareto(sol, UQ_PF = TRUE, UQ_PS = TRUE, UQ_dens = TRUE,
   control = list(f1lim = lim1, f2lim = lim2))
 
@@ -377,7 +377,7 @@ res <- easyGParetoptim(fn = DTLZ2, budget = 50, lower = rep(0, 4),
 library("rgl", quietly = TRUE)
 r3dDefaults$windowRect <- c(0,50, 800, 800) # for better looking figure
 plotGPareto(res, UQ_PS = TRUE, control = list(lower = rep(0, 4),
-  upper = rep(1, 4), nintegpoints = 100, option = "mean",
+  upper = rep(1, 4), nintegpoints = 80, option = "mean",
   resolution = 25))
 rgl.snapshot("./figure/ex3DPS.png", fmt = 'png')
 

@@ -1,8 +1,8 @@
 Package: GPareto
 Type: Package
 Title: Gaussian Processes for Pareto Front Estimation and Optimization
-Version: 1.1.7
-Date: 2022-06-23
+Version: 1.1.8
+Date: 2024-01-26
 Author: Mickael Binois, Victor Picheny
 Maintainer: Mickael Binois <mickael.binois@inria.fr>
 Description: Gaussian process regression models, a.k.a. Kriging models, are
@@ -20,7 +20,7 @@ LinkingTo: Rcpp
 Repository: CRAN
 URL: https://github.com/mbinois/GPareto
 BugReports: https://github.com/mbinois/GPareto/issues
-RoxygenNote: 7.2.0
+RoxygenNote: 7.3.1
 NeedsCompilation: yes
-Packaged: 2022-06-24 08:24:23 UTC; mbinois
-Date/Publication: 2022-06-24 12:20:02 UTC
+Packaged: 2024-01-26 15:28:08 UTC; mbinois
+Date/Publication: 2024-01-26 16:30:03 UTC
